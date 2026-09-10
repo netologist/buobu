@@ -1,0 +1,24 @@
+%% Source: src/lib/types.ts — entity types and their foreign keys.
+%% USER_ACCOUNT is the Supabase-authenticated account. It has no type in
+%% src/lib/types.ts; every entity references it through BaseEntity.user_id.
+erDiagram
+    USER_ACCOUNT ||--o{ BOARD : owns
+    BOARD ||--o{ BOARD_COLUMN : defines
+    BOARD ||--o{ SWIMLANE : contains
+    SWIMLANE ||--o{ TASK : contains
+    TASK ||--o{ TASK_CHECKLIST : has
+    TASK_CHECKLIST ||--o{ TASK_CHECKLIST_ITEM : has
+    SWIMLANE ||--o{ BACKLOG_ITEM : contains
+    SWIMLANE ||--o{ HABIT : contains
+    HABIT ||--o{ HABIT_LOG : records
+    HABIT }o--o| TIMEBLOCK : "recurrence overridden by"
+    SWIMLANE ||--o{ ROUTINE : contains
+    ROUTINE ||--o{ ROUTINE_LOG : records
+    ROUTINE }o--o| TIMEBLOCK : "recurrence overridden by"
+    ROUTINE_LOG }o--o| TASK : generates
+    SWIMLANE ||--o{ NOTE : contains
+    SWIMLANE ||--o{ BOOKMARK : contains
+    SWIMLANE ||--o{ MINDMAP : contains
+    MINDMAP ||--o{ MINDMAP_NODE : contains
+    SWIMLANE ||--o{ VISION_BOARD_ITEM : contains
+    SWIMLANE ||--o{ TIMEBLOCK : contains

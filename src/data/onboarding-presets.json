@@ -1,0 +1,97 @@
+[
+  {
+    "id": "minimal",
+    "label": "Minimal",
+    "description": "Start with one board and one default swimlane",
+    "boards": [
+      {
+        "name": "My Board",
+        "columns": [
+          { "id": "todo", "title": "To Do" },
+          { "id": "in-progress", "title": "In Progress" },
+          { "id": "done", "title": "Done" }
+        ],
+        "weekStart": 1,
+        "swimlanes": [
+          {
+            "name": "Default Swimlane",
+            "label": "Default",
+            "currency": "USD",
+            "color": "#3b82f6",
+            "pomodoroMinutes": 25,
+            "breakMinutes": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "personal",
+    "label": "Personal",
+    "description": "Personal goals setup",
+    "boards": [
+      {
+        "name": "Personal Goals",
+        "columns": [
+          { "id": "todo", "title": "To Do" },
+          { "id": "this-week", "title": "This Week" },
+          { "id": "done", "title": "Done" }
+        ],
+        "weekStart": 1,
+        "swimlanes": [
+          {
+            "name": "Health",
+            "label": "Health",
+            "currency": "USD",
+            "color": "#ef4444",
+            "pomodoroMinutes": 25,
+            "breakMinutes": 5
+          },
+          {
+            "name": "Learning",
+            "label": "Learning",
+            "currency": "USD",
+            "color": "#22c55e",
+            "pomodoroMinutes": 25,
+            "breakMinutes": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "work",
+    "label": "Work",
+    "description": "Work projects setup",
+    "boards": [
+      {
+        "name": "Work Projects",
+        "columns": [
+          { "id": "backlog", "title": "Backlog" },
+          { "id": "doing", "title": "Doing" },
+          { "id": "review", "title": "Review" },
+          { "id": "done", "title": "Done" }
+        ],
+        "weekStart": 1,
+        "swimlanes": [
+          {
+            "name": "Product",
+            "label": "Product",
+            "currency": "USD",
+            "color": "#6366f1",
+            "pomodoroMinutes": 25,
+            "breakMinutes": 5
+          },
+          {
+            "name": "Engineering",
+            "label": "Engineering",
+            "currency": "USD",
+            "color": "#0ea5e9",
+            "pomodoroMinutes": 25,
+            "breakMinutes": 5
+          }
+        ]
+      }
+    ]
+  }
+]

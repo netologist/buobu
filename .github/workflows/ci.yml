@@ -1,0 +1,67 @@
+# Continuous integration: typecheck, lint, tests, and a build of both modes.
+#
+# This workflow needs no repository secrets, so it runs the same on a fork as it
+# does here. Deployment is not part of it — see deploy.yml.disabled.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit and component tests
+        run: pnpm test:run
+
+      # Both modes are built. Local Mode is what a fresh clone runs and needs no
+      # configuration; Cloud Mode is what a deploy runs and needs Supabase values
+      # to exist at all. Placeholders satisfy the guards, so this proves both
+      # code paths compile without asking anyone for a credential.
+      - name: Build (Local Mode)
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_LOCAL_MODE: 'true'
+
+      - name: Build (Cloud Mode)
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_LOCAL_MODE: 'false'
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder

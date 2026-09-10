@@ -1,0 +1,35 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "buobu-mcp-dev",
+  "main": "./index.ts",
+  "compatibility_date": "2026-04-23",
+  "workers_dev": true,
+  // Custom domains are attached once in the Cloudflare dashboard — Workers &
+  // Pages → the worker → Settings → Domains & Routes — and are deliberately not
+  // declared here. Wrangler treats `routes` as the source of truth and overwrites
+  // dashboard-defined routes on every deploy, so leaving the key out is what
+  // keeps the two from fighting. To use your own domain, add it in the dashboard
+  // rather than here.
+  "env": {
+    "production": {
+      "name": "buobu-mcp",
+      "workers_dev": true,
+      "secrets": {
+        "required": [
+          "NEXT_PUBLIC_SUPABASE_URL",
+          "SUPABASE_SERVICE_ROLE_KEY"
+        ]
+      }
+    },
+    "staging": {
+      "name": "buobu-mcp-staging",
+      "workers_dev": true,
+      "secrets": {
+        "required": [
+          "NEXT_PUBLIC_SUPABASE_URL",
+          "SUPABASE_SERVICE_ROLE_KEY"
+        ]
+      }
+    }
+  }
+}

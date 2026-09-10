@@ -1,0 +1,38 @@
+[
+  {
+    "id": "board-product",
+    "name": "Product Roadmap",
+    "weekStart": 1,
+    "archiveColumnId": "done",
+    "showArchiveColumn": false,
+    "columns": [
+      { "id": "todo", "title": "To Do", "order": 0 },
+      { "id": "in-progress", "title": "In Progress", "order": 1 },
+      { "id": "review", "title": "Review", "order": 2 },
+      { "id": "done", "title": "Done", "order": 3 }
+    ],
+    "swimlanes": [
+      { "id": "lane-frontend", "name": "Frontend", "label": "UI", "currency": "TRY", "color": "#2563EB", "pomodoroMinutes": 25, "breakMinutes": 5, "deadline": "2025-09-19" },
+      { "id": "lane-backend", "name": "Backend", "label": "API", "currency": "TRY", "color": "#0F766E", "pomodoroMinutes": 25, "breakMinutes": 5, "deadline": "2025-09-26" },
+      { "id": "lane-ops", "name": "Ops", "label": "Infra", "currency": "TRY", "color": "#B45309", "pomodoroMinutes": 25, "breakMinutes": 5, "deadline": "2025-10-03" }
+    ]
+  },
+  {
+    "id": "board-product-2",
+    "name": "Product Roadmap 2",
+    "weekStart": 1,
+    "archiveColumnId": "done",
+    "showArchiveColumn": false,
+    "columns": [
+      { "id": "todo", "title": "To Do", "order": 0 },
+      { "id": "in-progress", "title": "In Progress", "order": 1 },
+      { "id": "review", "title": "Review", "order": 2 },
+      { "id": "done", "title": "Done", "order": 3 }
+    ],
+    "swimlanes": [
+      { "id": "lane-frontend-2", "name": "Frontend", "label": "UI", "currency": "USD", "color": "#6366F1", "pomodoroMinutes": 25, "breakMinutes": 5, "deadline": "2025-09-17" },
+      { "id": "lane-backend-2", "name": "Backend", "label": "API", "currency": "USD", "color": "#16A34A", "pomodoroMinutes": 25, "breakMinutes": 5, "deadline": "2025-09-23" },
+      { "id": "lane-ops-2", "name": "Ops", "label": "Infra", "currency": "USD", "color": "#DC2626", "pomodoroMinutes": 25, "breakMinutes": 5, "deadline": "2025-09-30" }
+    ]
+  }
+]

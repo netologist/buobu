@@ -1,0 +1,92 @@
+[
+  {
+    "id": "habit-frontend-1",
+    "boardId": "board-product",
+    "swimlaneId": "lane-frontend",
+    "title": "Ship UI polish",
+    "color": "#2563EB",
+    "order": 1,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-frontend-2",
+    "boardId": "board-product",
+    "swimlaneId": "lane-frontend",
+    "title": "Review Figma",
+    "color": "#3B82F6",
+    "order": 2,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-frontend-3",
+    "boardId": "board-product",
+    "swimlaneId": "lane-frontend",
+    "title": "Refactor components",
+    "color": "#60A5FA",
+    "order": 3,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-backend-1",
+    "boardId": "board-product",
+    "swimlaneId": "lane-backend",
+    "title": "Ship API improvements",
+    "color": "#0F766E",
+    "order": 1,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-backend-2",
+    "boardId": "board-product",
+    "swimlaneId": "lane-backend",
+    "title": "Performance tests",
+    "color": "#14B8A6",
+    "order": 2,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-backend-3",
+    "boardId": "board-product",
+    "swimlaneId": "lane-backend",
+    "title": "Bug triage",
+    "color": "#2DD4BF",
+    "order": 3,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-ops-1",
+    "boardId": "board-product",
+    "swimlaneId": "lane-ops",
+    "title": "Monitor incidents",
+    "color": "#B45309",
+    "order": 1,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-ops-2",
+    "boardId": "board-product",
+    "swimlaneId": "lane-ops",
+    "title": "Infra hygiene",
+    "color": "#D97706",
+    "order": 2,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  },
+  {
+    "id": "habit-ops-3",
+    "boardId": "board-product",
+    "swimlaneId": "lane-ops",
+    "title": "Backup checks",
+    "color": "#F59E0B",
+    "order": 3,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-01T09:00:00.000Z"
+  }
+]

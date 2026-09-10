@@ -1,0 +1,2 @@
+[functions.fetch-bookmark-metadata]
+verify_jwt = true

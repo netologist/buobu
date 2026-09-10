@@ -1,0 +1,50 @@
+# ============================================================================
+# terraform.tfvars — actual values go here. DO NOT COMMIT.
+# Copy this file to terraform.tfvars and fill it in; .gitignore already covers
+# terraform.tfvars, *.tfstate and terraform.tfvars.json.
+# ============================================================================
+
+# ─── Naming ───────────────────────────────────────────────────────────────────
+# Required, no defaults. These name real resources, so Terraform asks for them
+# rather than guessing: a wrong default here would propose replacing your
+# infrastructure.
+
+# Names the Cloudflare Pages project and, if you create one, the Supabase project.
+project_name = "example-app"
+
+# The apex domain. It must already be a zone in your Cloudflare account.
+# The app is served from this domain and from www.<root_domain>.
+root_domain = "example.com"
+
+# ─── Cloudflare ───────────────────────────────────────────────────────────────
+# Create an API token at: https://dash.cloudflare.com/profile/api-tokens
+# Use "Create Custom Token" with these permissions:
+#   Zone > DNS > Edit
+#   Zone > Zone > Read
+#   Account > Cloudflare Pages > Edit
+#   Account > Workers Scripts > Edit
+cloudflare_api_token = "replace-with-your-token"
+
+# Find at: https://dash.cloudflare.com → any zone → Overview → Account ID
+cloudflare_account_id = "replace-with-your-account-id"
+
+# ─── Supabase ─────────────────────────────────────────────────────────────────
+# Create a personal access token at: https://supabase.com/dashboard/account/tokens
+supabase_access_token = "replace-with-your-access-token"
+
+# Find at: https://supabase.com/dashboard/org → select org → Settings → Organization ID
+supabase_organization_id = "replace-with-your-organization-id"
+
+# Strong password for the PostgreSQL superuser (min 12 characters).
+# Store it somewhere safe — you need it for direct database connections.
+supabase_db_password = "replace-with-a-strong-password"
+
+# Closest region to your users.
+# Options: ap-southeast-1, us-east-1, us-west-1, eu-central-1, ap-northeast-1
+# Full list: https://supabase.com/docs/guides/platform/regions
+supabase_region = "eu-central-1"
+
+# Set to true only when you want Terraform to create a new Supabase project.
+# Keep false if your org has hit the free-tier project limit, or if you already
+# have a project to point the app at.
+create_supabase_project = false

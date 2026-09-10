@@ -1,0 +1,90 @@
+# DISABLED TEMPLATE.
+#
+# GitHub only runs workflow files ending in .yml or .yaml, so this file never
+# triggers. Rename it to `e2e.yml` to arm it.
+#
+# What it does: runs the Playwright suite against a real Supabase project.
+#
+# Before using it, add these repository secrets:
+#   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, E2E_TEST_EMAIL, E2E_TEST_PASSWORD
+# and this repository variable:
+#   NEXT_PUBLIC_SUPABASE_URL
+#
+# `E2E_TEST_INVITE_CODE` is only needed by the registration spec.
+#
+# Be aware: the suite *skips* the credential-gated tests when those values are
+# missing, so a green run without them proves very little. Check the skip count.
+# Running it locally is usually easier — see docs/setup/testing.md.
+name: Acceptance Tests (E2E)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to test
+        required: false
+        default: main
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Playwright (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run acceptance tests
+        # CI=true → one worker, so parallel sign-ins do not trip Supabase rate
+        # limiting, plus retries and the GitHub reporter.
+        run: pnpm exec playwright test --project=chromium
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_TEST_INVITE_CODE: ${{ secrets.E2E_TEST_INVITE_CODE }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures-${{ github.run_id }}
+          path: test-results/
+          retention-days: 7

@@ -1,0 +1,213 @@
+# DISABLED TEMPLATE.
+#
+# GitHub only runs workflow files ending in .yml or .yaml, so this file never
+# triggers. Rename it to `infra.yml` to arm it.
+#
+# What it does: plans the Terraform in `infra/terraform` on every pull request
+# that touches it, and applies on a push to main. One environment, one Terraform
+# Cloud workspace.
+#
+# Before using it:
+#   1. Replace `example-app` with your Terraform Cloud workspace name.
+#   2. Add the repository secrets and variables listed below. (Terraform Cloud
+#      provisions a real Supabase project and real Cloudflare resources, so
+#      these are all live credentials.)
+#
+#   Secrets:    CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
+#               SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, TF_API_TOKEN
+#   Variables:  PROJECT_NAME, ROOT_DOMAIN, SUPABASE_ORGANIZATION_ID,
+#               SUPABASE_REGION (optional, defaults to eu-central-1),
+#               CREATE_SUPABASE_PROJECT
+#
+# Note: `TF_WORKSPACE` is combined with the workspace prefix in
+# `infra/terraform/main.tf` — the `backend "remote"` block reads
+# <prefix><TF_WORKSPACE>. Edit that block (or move it to a partial backend
+# configuration) before running this against your own account.
+#
+# `scripts/setup-cloudflare.sh` runs the same flow locally and is easier to
+# start with. See docs/setup/deployment.md.
+name: Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths: ['infra/**']
+  pull_request:
+    paths: ['infra/**']
+  workflow_dispatch:
+    inputs:
+      auto_approve:
+        description: Apply without reviewing the plan first
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: infra
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: infra/terraform
+
+jobs:
+  plan:
+    name: Terraform plan
+    runs-on: ubuntu-latest
+
+    outputs:
+      exitcode: ${{ steps.plan.outputs.exitcode }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~1.9'
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Write terraform.tfvars
+        env:
+          PROJECT_NAME:             ${{ vars.PROJECT_NAME }}
+          ROOT_DOMAIN:              ${{ vars.ROOT_DOMAIN }}
+          CLOUDFLARE_API_TOKEN:     ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID:    ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SUPABASE_ACCESS_TOKEN:    ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ORGANIZATION_ID: ${{ vars.SUPABASE_ORGANIZATION_ID }}
+          SUPABASE_DB_PASSWORD:     ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_REGION:          ${{ vars.SUPABASE_REGION }}
+          CREATE_SUPABASE_PROJECT:  ${{ vars.CREATE_SUPABASE_PROJECT }}
+        run: |
+          cat <<EOF > terraform.tfvars
+          project_name             = "${PROJECT_NAME}"
+          root_domain              = "${ROOT_DOMAIN}"
+          cloudflare_api_token     = "${CLOUDFLARE_API_TOKEN}"
+          cloudflare_account_id    = "${CLOUDFLARE_ACCOUNT_ID}"
+          supabase_access_token    = "${SUPABASE_ACCESS_TOKEN}"
+          supabase_organization_id = "${SUPABASE_ORGANIZATION_ID}"
+          supabase_db_password     = "${SUPABASE_DB_PASSWORD}"
+          supabase_region          = "${SUPABASE_REGION:-eu-central-1}"
+          create_supabase_project  = ${CREATE_SUPABASE_PROJECT:-false}
+          EOF
+
+      - name: Terraform init
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: example-app
+        run: terraform init -input=false -reconfigure
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: example-app
+        # 0 = no changes, 1 = error, 2 = changes
+        run: |
+          terraform plan -input=false -detailed-exitcode -out=tfplan 2>&1 | tee plan.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Fail on plan error
+        if: steps.plan.outputs.exitcode == '1'
+        run: |
+          echo "::error::Terraform plan failed. See the log above."
+          exit 1
+
+      - name: Summarise plan
+        if: always()
+        run: |
+          {
+            echo "## Terraform plan"
+            echo ""
+            if [ "${{ steps.plan.outputs.exitcode }}" = "0" ]; then
+              echo "No changes."
+            elif [ "${{ steps.plan.outputs.exitcode }}" = "2" ]; then
+              echo 'Changes detected:'
+              echo '```'
+              grep -E '^  [#+~-]|Plan:|No changes' plan.txt || true
+              echo '```'
+            else
+              echo "Plan failed."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: Terraform apply
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: production
+
+    if: |
+      (github.event_name == 'push' && needs.plan.outputs.exitcode == '2') ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.auto_approve || needs.plan.outputs.exitcode == '2'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~1.9'
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Write terraform.tfvars
+        env:
+          PROJECT_NAME:             ${{ vars.PROJECT_NAME }}
+          ROOT_DOMAIN:              ${{ vars.ROOT_DOMAIN }}
+          CLOUDFLARE_API_TOKEN:     ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID:    ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SUPABASE_ACCESS_TOKEN:    ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ORGANIZATION_ID: ${{ vars.SUPABASE_ORGANIZATION_ID }}
+          SUPABASE_DB_PASSWORD:     ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_REGION:          ${{ vars.SUPABASE_REGION }}
+          CREATE_SUPABASE_PROJECT:  ${{ vars.CREATE_SUPABASE_PROJECT }}
+        run: |
+          cat <<EOF > terraform.tfvars
+          project_name             = "${PROJECT_NAME}"
+          root_domain              = "${ROOT_DOMAIN}"
+          cloudflare_api_token     = "${CLOUDFLARE_API_TOKEN}"
+          cloudflare_account_id    = "${CLOUDFLARE_ACCOUNT_ID}"
+          supabase_access_token    = "${SUPABASE_ACCESS_TOKEN}"
+          supabase_organization_id = "${SUPABASE_ORGANIZATION_ID}"
+          supabase_db_password     = "${SUPABASE_DB_PASSWORD}"
+          supabase_region          = "${SUPABASE_REGION:-eu-central-1}"
+          create_supabase_project  = ${CREATE_SUPABASE_PROJECT:-false}
+          EOF
+
+      - name: Terraform init
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: example-app
+        run: terraform init -input=false -reconfigure
+
+      # Re-plan here rather than applying the plan artifact from the previous
+      # job, so what runs is always fresh.
+      - name: Terraform apply
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: example-app
+        run: |
+          terraform plan -input=false -out=tfplan
+          terraform apply -input=false -auto-approve tfplan
+
+      - name: Summarise apply
+        env:
+          TF_WORKSPACE: example-app
+        run: |
+          {
+            echo "## Terraform apply"
+            echo ""
+            terraform output 2>/dev/null || echo "No outputs."
+          } >> "$GITHUB_STEP_SUMMARY"

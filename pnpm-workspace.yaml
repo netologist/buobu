@@ -1,0 +1,14 @@
+packages:
+  - 'workers/api'
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - '@firebase/util'
+  - esbuild
+  - msw
+  - protobufjs
+  - rxdb
+  - workerd

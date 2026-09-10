@@ -1,0 +1,20 @@
+%% Source: src/lib/types.ts (Routine, RoutineLog), src/stores/atoms/routines.ts and
+%% src/components/routines/DailyBriefingModal.tsx.
+%% RoutineLog.status is one of approved, skipped or auto-processed.
+%% Due detection: nextDueDate is non-null and <= today.
+%% task and event routines require approval; payment routines are auto-processed.
+%% Like habits, a routine with timeblockId takes its recurrence from that timeblock.
+stateDiagram-v2
+    state "auto-processed" as AutoProcessed
+    [*] --> Active: routine created
+    Active --> Due: nextDueDate reached
+    Due --> Approved: approved in the daily briefing, a task is generated
+    Due --> Skipped: skipped in the daily briefing, no task is generated
+    Due --> AutoProcessed: payment routine processed automatically, a task with a transaction is generated
+    Approved --> Active: nextDueDate advanced
+    Skipped --> Active: nextDueDate advanced
+    AutoProcessed --> Active: nextDueDate advanced
+    Active --> Archived: archive
+    Archived --> Deleted: delete (no routine-restore action exists in the current UI)
+    Active --> Deleted: delete
+    Deleted --> [*]

@@ -1,0 +1,168 @@
+# DISABLED TEMPLATE.
+#
+# GitHub only runs workflow files ending in .yml or .yaml, so this file never
+# triggers. Rename it to `deploy.yml` to arm it.
+#
+# What it does: builds the static export in Cloud Mode, publishes `out/` to a
+# static host (Cloudflare Pages is used below as an example), and can also
+# deploy the two Cloudflare Workers.
+#
+# Before using it:
+#   1. Replace `example-app` with your hosting project name.
+#   2. Optionally attach a custom domain to each Worker in the Cloudflare
+#      dashboard. Without one they publish to *.workers.dev, which is fine.
+#   3. Add the repository secrets and variables below.
+#
+#   Secrets:    CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
+#               NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY
+#   Variables:  NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_MCP_URL,
+#               NEXT_PUBLIC_REFERRAL_API_URL
+#
+# A deploy needs `NEXT_PUBLIC_SUPABASE_URL` and
+# `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; without them the build stops with an
+# error rather than quietly shipping a local-only app. Never add
+# `NEXT_PUBLIC_LOCAL_MODE` here.
+#
+# See docs/setup/deployment.md.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_workers:
+        description: Also deploy the Cloudflare Workers
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve build metadata
+        run: |
+          echo "NEXT_PUBLIC_BUILD_VERSION=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_LOCAL_MODE: 'false'
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_MCP_URL: ${{ vars.NEXT_PUBLIC_MCP_URL }}
+          NEXT_PUBLIC_REFERRAL_API_URL: ${{ vars.NEXT_PUBLIC_REFERRAL_API_URL }}
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: out/
+          retention-days: 1
+
+  deploy-site:
+    name: Deploy static export
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: out/
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=example-app
+
+  deploy-workers:
+    name: Deploy Workers
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy_workers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Both Workers read the service-role key, so they are handed their
+      # configuration as secret files rather than as committed values.
+      - name: Write Worker secrets
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_MCP_URL: ${{ vars.NEXT_PUBLIC_MCP_URL }}
+          NEXT_PUBLIC_REFERRAL_API_URL: ${{ vars.NEXT_PUBLIC_REFERRAL_API_URL }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const required = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+          for (const key of required) {
+            if (!process.env[key]) throw new Error(`Missing required Worker secret: ${key}`);
+          }
+
+          const common = {
+            NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+            SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+          };
+
+          // The referral Worker reads its allowed origin under the name
+          // ALLOWED_ORIGIN; the MCP Worker keeps the MCP_ALLOWED_ORIGIN name.
+          fs.writeFileSync('workers/mcp/secrets.json', JSON.stringify(common));
+          fs.writeFileSync('workers/referral/secrets.json', JSON.stringify(common));
+          NODE
+
+      # The Worker configs define `production` and `staging` environments, so the
+      # environment is named explicitly. If you keep only one, drop `--env`.
+      - name: Deploy MCP Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/mcp
+          command: deploy --env production --secrets-file secrets.json
+
+      - name: Deploy referral Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/referral
+          command: deploy --env production --secrets-file secrets.json

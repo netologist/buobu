@@ -1,0 +1,20 @@
+%% Source: src/lib/types.ts (Habit, HabitLog), src/components/habits/HabitsBoard.tsx
+%% and src/lib/timeblocks/effective-recurrence.ts.
+%% Log values: 0-3 are the progress cycle, -1 is skipped (long-press a day).
+%%
+%% Timeblock link override: when habit.timeblockId is set, frequencyDays is hidden
+%% in the habit form and the effective schedule comes from the linked timeblock
+%% (weekly + daysOfWeek -> those days, daily/custom -> all days, monthly/yearly -> no
+%% scheduled days). A timeblock with showAsHabit projects its own habit with
+%% sourceType "timeblock"; archiving the timeblock archives that projection.
+stateDiagram-v2
+    [*] --> Active: habit created, or projected from a timeblock with showAsHabit
+    Active --> Logged: log a day (value 0 -> 1 -> 2 -> 3)
+    Active --> Skipped: long-press a day (value -1)
+    Logged --> Active: next date
+    Skipped --> Logged: cycle from -1 resets to 0
+    Active --> Archived: archive
+    Archived --> Active: unarchive in the habit form
+    Active --> Deleted: delete
+    Archived --> Deleted: delete
+    Deleted --> [*]

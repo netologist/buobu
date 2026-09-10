@@ -1,0 +1,79 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# dependencies
+/node_modules
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+package-lock.json
+yarn.lock
+# testing
+/coverage
+# next.js
+/.next/
+/out/
+# production
+/build
+# misc
+.DS_Store
+*.pem
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+# vercel
+.vercel
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.wrangler
+/workers/api/node_modules
+/workers/api/.vercel
+/workers/api/.next
+# git worktrees
+/.worktrees/
+/workers/api/dist
+/workers/api/build
+/workers/api/.wrangler
+/workers/mcp/secrets.json
+/workers/mcp/.dev.vars
+/workers/referral/secrets.json
+/workers/referral/.dev.vars
+_old_files
+# Terraform
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.backup
+infra/terraform/terraform.tfvars
+infra/terraform/crash.log
+infra/terraform/override.tf
+infra/terraform/override.tf.json
+infra/terraform/*_override.tf
+infra/terraform/*_override.tf.json
+
+# OpenCode/Claude integration
+.opencode
+.opencode/*
+
+# Supabase CLI temp files
+supabase/.temp
+supabase/.temp/*
+
+playwright-report
+playwright-report/*
+
+test-results
+test-results/*
+
+graphify-out/
+.rpiv/
+repomix-output.xml
+.pi-lens
