@@ -115,20 +115,16 @@ REVOKE ALL ON TABLE public.campaign_code_usages FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.validate_campaign_code(TEXT, TEXT, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.consume_campaign_code(TEXT, TEXT, UUID) TO anon, authenticated;
 
--- Example: Invite campaign with 500 uses, expires in 1 month
-INSERT INTO public.campaign_codes (code, campaign_type, max_uses, expires_at)
-VALUES ('BETA2026', 'invite', 500, NOW() + INTERVAL '1 month');
-
--- Example: Voucher campaign for early adopters
-INSERT INTO public.campaign_codes (code, campaign_type, max_uses, expires_at)
-VALUES ('EARLY100', 'voucher', 100, NOW() + INTERVAL '2 weeks');
-
--- Example: Promo code for marketing campaign
-INSERT INTO public.campaign_codes (code, campaign_type, max_uses, expires_at)
-VALUES ('PROMO50', 'promo', 50, NOW() + INTERVAL '3 months');
-
--- Example: Generate 100 invite codes (idempotent)
-INSERT INTO public.campaign_codes (code, campaign_type, max_uses, expires_at)
-SELECT UPPER(SUBSTRING(MD5(('INVITE-' || gs)::TEXT), 1, 10)), 'invite', 1, NOW() + INTERVAL '1 year'
-FROM generate_series(1, 100) AS gs
-ON CONFLICT (code) DO NOTHING;
+-- Campaign codes are deliberately NOT seeded here.
+--
+-- An earlier version of this migration inserted three literal codes
+-- ('BETA2026', 'EARLY100', 'PROMO50') plus 100 more derived from
+-- MD5('INVITE-' || n). All of those values were published in the repository, so
+-- they are not credentials -- they are a registration bypass for anyone who
+-- reads the migrations.
+--
+-- Create codes out of band instead (see docs/setup/supabase.md). A later
+-- migration gives `code` a ULID default, so you do not pass one:
+--
+--   INSERT INTO public.campaign_codes (campaign_type, max_uses, expires_at)
+--   VALUES ('invite', 1, NOW() + INTERVAL '30 days') RETURNING code;

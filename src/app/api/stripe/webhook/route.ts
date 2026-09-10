@@ -49,6 +49,26 @@ async function markProcessed(eventId: string, eventType: string): Promise<boolea
   return true;
 }
 
+/**
+ * Remove the idempotency marker, so Stripe's retry is not mistaken for a replay.
+ *
+ * The marker is written before the handler runs, which prevents two concurrent
+ * deliveries of the same event from both processing it. The cost is that a
+ * handler failure leaves it behind: the route returns 500 asking Stripe to
+ * retry, the retry finds the marker, and it is acknowledged without ever
+ * running. Clearing it on failure restores the retry.
+ */
+async function unmarkProcessed(eventId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('stripe_events_processed')
+    .delete()
+    .eq('event_id', eventId);
+
+  if (error) {
+    console.error('[webhook] failed to clear idempotency marker:', error);
+  }
+}
+
 /** Log a handler failure for ops visibility. Non-throwing. */
 async function logFailure(
   eventId: string,
@@ -310,6 +330,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error('[webhook] event handler failed:', err);
     await logFailure(event.id, event.type, err, body);
+    // Clear the marker first: returning 500 tells Stripe to retry, and without
+    // this the retry would be short-circuited as a replay — silently and
+    // permanently dropping the paid-state transition.
+    await unmarkProcessed(event.id);
     // Return 500 so Stripe retries the event.
     return NextResponse.json({ error: 'Handler failed' }, { status: 500 });
   }

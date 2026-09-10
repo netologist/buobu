@@ -203,16 +203,14 @@ describe('register', () => {
     await expect(register('a@b.com', 'pw', '')).rejects.toThrow('Invite code is required');
   });
 
-  it('throws when invite code has invalid characters', async () => {
-    await expect(register('a@b.com', 'pw', 'inv@lid!')).rejects.toThrow(
-      'Invite code must be 6-20 characters'
-    );
+  it('rejects an invite code with invalid characters, without calling the server', async () => {
+    await expect(register('a@b.com', 'pw', 'inv@lid!')).rejects.toThrow();
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalled();
   });
 
-  it('throws when invite code is too short', async () => {
-    await expect(register('a@b.com', 'pw', 'ABC')).rejects.toThrow(
-      'Invite code must be 6-20 characters'
-    );
+  it('rejects an invite code that is too short, without calling the server', async () => {
+    await expect(register('a@b.com', 'pw', 'ABC')).rejects.toThrow();
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalled();
   });
 
   it('throws when invite code is invalid (server rejects)', async () => {

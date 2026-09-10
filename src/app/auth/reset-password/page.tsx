@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { LOCAL_MODE } from '@/lib/feature-flags';
@@ -29,7 +29,7 @@ async function waitForSession(attempts = 5, delayMs = 200): Promise<boolean> {
   return false;
 }
 
-async function tryRecoveryFromQuery(searchParams: ReturnType<typeof useSearchParams>): Promise<RecoveryInitResult> {
+async function tryRecoveryFromQuery(searchParams: ReadonlyURLSearchParams): Promise<RecoveryInitResult> {
   const explicitError = searchParams.get('error') ?? searchParams.get('error_description');
   if (explicitError) return 'invalid';
 
@@ -48,25 +48,6 @@ async function tryRecoveryFromQuery(searchParams: ReturnType<typeof useSearchPar
   return null;
 }
 
-async function tryRecoveryFromHashFragment(): Promise<RecoveryInitResult> {
-  const hash = globalThis.location?.hash ?? '';
-  const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
-  const accessToken = hashParams.get('access_token');
-  const refreshToken = hashParams.get('refresh_token');
-  const hashType = hashParams.get('type');
-
-  if (!(accessToken && refreshToken && hashType === 'recovery')) {
-    return null;
-  }
-
-  const { error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-
-  return error ? 'invalid' : 'ready';
-}
-
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,10 +58,16 @@ function ResetPasswordForm() {
   const [sessionReady, setSessionReady] = useState(false);
   const [invalidLink, setInvalidLink] = useState(false);
 
-  // Accept all supported Supabase recovery link formats:
+  // Accept the two supported Supabase recovery link formats:
   // 1) token_hash + type=recovery  — OTP verification, no PKCE verifier needed
   // 2) code (PKCE exchange)        — handled automatically by detectSessionInUrl; fires PASSWORD_RECOVERY event
-  // 3) hash fragment tokens        — legacy implicit-flow links (#access_token, #refresh_token, type=recovery)
+  //
+  // Implicit-flow hash fragments (#access_token, #refresh_token, type=recovery)
+  // are deliberately NOT accepted. That fragment is attacker-writable, so
+  // adopting it let anyone plant their own session in a victim's browser by
+  // sending a crafted link — everything the victim then typed, including the new
+  // password, was written to the attacker's account. The project sets
+  // flowType: 'pkce', so links of that shape are not issued.
   useEffect(() => {
     let cancelled = false;
 
@@ -128,17 +115,6 @@ function ResetPasswordForm() {
         return;
       }
       if (queryResult === 'invalid') {
-        markInvalid();
-        return;
-      }
-
-      // Legacy hash-fragment tokens (#access_token, #refresh_token, type=recovery).
-      const hashResult = await tryRecoveryFromHashFragment();
-      if (hashResult === 'ready') {
-        markReady();
-        return;
-      }
-      if (hashResult === 'invalid') {
         markInvalid();
         return;
       }

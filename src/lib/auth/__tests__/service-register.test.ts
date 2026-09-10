@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { supabase } from "@/lib/supabase";
-import { STORAGE_KEYS } from "@/lib/constants";
+import { INVITE_CODE_MAX_LENGTH, INVITE_CODE_PATTERN, STORAGE_KEYS } from "@/lib/constants";
 import { makeSupabaseUser } from "@/test/mocks/supabase";
 
 // ---------------------------------------------------------------------------
@@ -101,16 +101,55 @@ describe("register()", () => {
     );
   });
 
-  it("throws when campaign code is shorter than 6 characters", async () => {
-    await expect(register(TEST_EMAIL, TEST_PASSWORD, "AB12")).rejects.toThrow(
-      "6-20 characters",
-    );
+  it("rejects a code shorter than 6 characters, without calling the server", async () => {
+    await expect(register(TEST_EMAIL, TEST_PASSWORD, "AB12")).rejects.toThrow();
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalled();
   });
 
-  it("throws when campaign code contains invalid characters", async () => {
+  it("rejects a code containing characters outside A-Z and 0-9, without calling the server", async () => {
     await expect(
       register(TEST_EMAIL, TEST_PASSWORD, "INVITE!"),
-    ).rejects.toThrow("6-20 characters");
+    ).rejects.toThrow();
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalled();
+  });
+
+  // ── ULID codes ────────────────────────────────────────────────────────────
+  // Invite codes are 26-character ULIDs now. The register form and this service
+  // validate independently, so if their patterns ever disagree every real code
+  // is rejected at submit time while tests of either half keep passing.
+
+  it("accepts a 26-character ULID and sends it to the server", async () => {
+    const ulid = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+    setupHappyPath();
+
+    await register(TEST_EMAIL, TEST_PASSWORD, ulid);
+
+    const validated = vi
+      .mocked(supabase.rpc)
+      .mock.calls.find(([name]) => name === "validate_campaign_code");
+    expect(validated?.[1]).toEqual({
+      p_code: ulid,
+      p_campaign_type: "invite",
+    });
+  });
+
+  it("rejects a 26-character code using letters outside the Crockford alphabet", async () => {
+    // I, L, O and U are deliberately absent, so a ULID cannot be misread as
+    // another valid ULID.
+    await expect(
+      register(TEST_EMAIL, TEST_PASSWORD, "IIIIIIIIIIIIIIIIIIIIIIIIII"),
+    ).rejects.toThrow();
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalled();
+  });
+
+  it("keeps the longest accepted code within the input's maxLength", () => {
+    // The form truncates at INVITE_CODE_MAX_LENGTH before validating. If the
+    // pattern ever accepts something longer, the browser hands the server a
+    // shortened code and the user is told their valid code is invalid -- with
+    // nothing in the logs, because the request never leaves the client.
+    expect(
+      INVITE_CODE_PATTERN.test("0".repeat(INVITE_CODE_MAX_LENGTH)),
+    ).toBe(true);
   });
 
   it("normalises campaign code to upper case before validation", async () => {

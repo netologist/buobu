@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 
 // ---------------------------------------------------------------------------
 // Environment stubs required by stripe.ts and supabase-admin.ts at import time.
@@ -92,9 +93,9 @@ function makeEvent(
   return { id, type, data: { object: dataObject } };
 }
 
-/** Build a NextRequest-compatible Request with a valid stripe-signature header. */
-function makeRequest(body: string, sig = 'valid-sig'): Request {
-  return new Request('http://localhost/api/stripe/webhook', {
+/** Build a NextRequest with a valid stripe-signature header. */
+function makeRequest(body: string, sig = 'valid-sig'): NextRequest {
+  return new NextRequest('http://localhost/api/stripe/webhook', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -142,12 +143,12 @@ beforeEach(() => {
 
 describe('POST /api/stripe/webhook — signature verification', () => {
   it('returns 400 when the stripe-signature header is missing', async () => {
-    const req = new Request('http://localhost/api/stripe/webhook', {
+    const req = new NextRequest('http://localhost/api/stripe/webhook', {
       method: 'POST',
       body: '{}',
     });
 
-    const res = await POST(req as any);
+    const res = await POST(req);
     expect(res.status).toBe(400);
     const json = await res.json() as { error: string };
     expect(json.error).toMatch(/stripe-signature/i);
@@ -158,7 +159,7 @@ describe('POST /api/stripe/webhook — signature verification', () => {
       throw new Error('No signatures found matching the expected signature');
     });
 
-    const res = await POST(makeRequest('{}') as any);
+    const res = await POST(makeRequest('{}'));
     expect(res.status).toBe(400);
     const json = await res.json() as { error: string };
     expect(json.error).toMatch(/signature/i);
@@ -177,7 +178,7 @@ describe('POST /api/stripe/webhook — idempotency', () => {
     // markProcessed insert returns unique_violation error (23505).
     queueFromResponses({ error: { code: '23505', message: 'duplicate' } });
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
     const json = await res.json() as Record<string, unknown>;
     expect(json.replayed).toBe(true);
@@ -205,7 +206,7 @@ describe('POST /api/stripe/webhook — customer.subscription.deleted', () => {
       { error: null },                                      // update subscriptions
     );
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
 
     const json = await res.json() as Record<string, unknown>;
@@ -225,7 +226,7 @@ describe('POST /api/stripe/webhook — customer.subscription.deleted', () => {
       { data: null, error: null },
     );
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
   });
 });
@@ -248,7 +249,7 @@ describe('POST /api/stripe/webhook — invoice.payment_failed', () => {
       { error: null },                                       // update subscriptions
     );
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
     const json = await res.json() as Record<string, unknown>;
     expect(json.received).toBe(true);
@@ -260,7 +261,7 @@ describe('POST /api/stripe/webhook — invoice.payment_failed', () => {
 
     queueFromResponses({ error: null }); // markProcessed only
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
   });
 });
@@ -280,7 +281,7 @@ describe('POST /api/stripe/webhook — customer.subscription.trial_will_end', ()
     // Only markProcessed is called — no getUserIdByCustomer or update.
     queueFromResponses({ error: null }); // markProcessed insert
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
     const json = await res.json() as Record<string, unknown>;
     expect(json.received).toBe(true);
@@ -301,7 +302,7 @@ describe('POST /api/stripe/webhook — unknown event type', () => {
 
     queueFromResponses({ error: null }); // markProcessed
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(200);
     const json = await res.json() as Record<string, unknown>;
     expect(json.received).toBe(true);
@@ -324,17 +325,21 @@ describe('POST /api/stripe/webhook — handler failure', () => {
       { error: null },     // markProcessed
     );
     // Override from so getUserIdByCustomer throws on the second call.
-    const callCount = 0;
     mockFrom.mockImplementationOnce(() => ({ insert: vi.fn().mockResolvedValue({ error: null }) }));
     mockFrom.mockImplementationOnce(() => {
       throw new Error('DB connection refused');
     });
     // logFailure uses from('stripe_events_failed').insert()
     mockFrom.mockImplementationOnce(() => ({ insert: vi.fn().mockResolvedValue({ error: null }) }));
+    // unmarkProcessed clears the idempotency marker so Stripe's retry is not
+    // mistaken for a replay.
+    const unmarkEq = vi.fn().mockResolvedValue({ error: null });
+    mockFrom.mockImplementationOnce(() => ({ delete: vi.fn().mockReturnValue({ eq: unmarkEq }) }));
 
-    const res = await POST(makeRequest(JSON.stringify(event)) as any);
+    const res = await POST(makeRequest(JSON.stringify(event)));
     expect(res.status).toBe(500);
     const json = await res.json() as Record<string, unknown>;
     expect(json.error).toBeDefined();
+    expect(unmarkEq).toHaveBeenCalledWith('event_id', event.id);
   });
 });

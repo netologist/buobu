@@ -113,6 +113,23 @@ async function resolveApiKey(
     throw new McpAuthError("API key has expired");
   }
 
+  // The client hides the MCP panel from free users, but that is presentation,
+  // not authorization. Enforce the entitlement here too, so a key minted while
+  // subscribed stops working once the subscription lapses.
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("plan, status")
+    .eq("user_id", data.user_id)
+    .maybeSingle();
+
+  const entitled =
+    subscription?.plan === "plus" &&
+    (subscription.status === "active" || subscription.status === "trialing");
+
+  if (!entitled) {
+    throw new McpAuthError("MCP access requires an active Plus subscription");
+  }
+
   void supabase
     .from("api_keys")
     .update({ last_used_at: new Date().toISOString() })

@@ -29,7 +29,7 @@ With `NEXT_PUBLIC_LOCAL_MODE` off, both public values are required. If either is
 
 ## 3. Apply the migrations
 
-All schema lives in [`supabase/migrations`](../../supabase/migrations) — 26 files, ordered by timestamp, from `20250830214000_invite_codes.sql` to `20260613110000_notes_metadata.sql`. They are plain SQL and idempotent enough to read top to bottom; there is no separate schema document because the migrations are the schema.
+All schema lives in [`supabase/migrations`](../../supabase/migrations) — 29 files, ordered by timestamp, from `20250830214000_invite_codes.sql` to `20260910000002_api_keys_require_plus.sql`. They are plain SQL and idempotent enough to read top to bottom; there is no separate schema document because the migrations are the schema.
 
 With the Supabase CLI:
 
@@ -51,7 +51,7 @@ They create:
 | Billing | `subscriptions`, `stripe_events_processed`, `stripe_events_failed` |
 | Invites and referrals | `invite_codes`, `campaign_codes`, `campaign_code_usages`, `referral_codes`, `referral_code_uses`, `cohort_counters` |
 
-Row Level Security is enabled on the user-facing tables, with 27 policies across the migration set. The `invite_codes` and `invite_campaigns` migrations seed 100 codes each.
+Row Level Security is enabled on the user-facing tables, with a policy per table and per operation. No migration seeds invite or campaign codes: they are credentials, and a derivation that lives in the repository is not a secret. See [Creating invite codes](#6-verify) below.
 
 Key RPCs the client calls: `validate_invite_code`, `consume_invite_code`, `validate_campaign_code`, `consume_campaign_code`, `apply_campaign_benefit`, `validate_referral_code`, `use_referral_code`, `get_my_referral_info`, `get_wall_of_fame`, `regenerate_referral_code`.
 
@@ -81,12 +81,23 @@ Email templates for confirmation, magic link, password reset and email change ar
 In the SQL editor:
 
 ```sql
-select count(*) from public.invite_codes;                 -- 100
-select public.validate_invite_code((select code from public.invite_codes where used_by is null limit 1));
+select count(*) from public.campaign_codes where is_active;
 select public.validate_campaign_code('NOPE');              -- a clear false
 ```
 
-Then register a user in the app with one of those codes and confirm rows appear in `boards` after the first sync.
+Nothing is seeded, so mint an invite code yourself. The `code` column defaults to `generate_ulid()`, so you do not supply one:
+
+```sql
+insert into public.campaign_codes (campaign_type, max_uses, expires_at)
+values ('invite', 1, now() + interval '30 days')
+returning code;                              -- 01K4ZQ8XW3F7M9V0R2B5N6T4HD
+```
+
+Codes are 26-character [ULIDs](https://github.com/ulid/spec): a millisecond timestamp followed by random bits, so they sort by issue time, and drawn from Crockford base32, which leaves out `I`, `L`, `O` and `U` so one code cannot be misread as another. Generate a standalone one with `select public.generate_ulid();`. Codes issued before this change are 6-20 characters and still validate.
+
+Then register a user in the app with that code and confirm rows appear in `boards` after the first sync.
+
+Codes are generated this way rather than seeded from a migration on purpose. Two migrations used to ship literal codes plus 100 derived from `MD5('INVITE-' || n)`; because the derivation was in the repository, anyone who read it could recompute every code. Those seeds are gone, and `20260910000001_deactivate_seeded_invite_codes.sql` switches off any that a database already created — **so if you have been handing out codes from an older deployment, issue new ones.**
 
 ## Optional feature flags
 

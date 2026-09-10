@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth/hooks';
+import { INVITE_CODE_ERROR, INVITE_CODE_MAX_LENGTH, INVITE_CODE_PATTERN } from '@/lib/constants';
 import { INVITE_CODES_ENABLED } from '@/lib/feature-flags';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -45,8 +46,8 @@ export default function RegisterPage() {
         return;
       }
 
-      if (!/^[A-Z0-9]{6,20}$/.test(normalizedCode)) {
-        setValidationError('Invite code must be 6-20 characters (A-Z, 0-9)');
+      if (!INVITE_CODE_PATTERN.test(normalizedCode)) {
+        setValidationError(INVITE_CODE_ERROR);
         return;
       }
     }
@@ -139,10 +140,10 @@ export default function RegisterPage() {
                   <Input
                     id="inviteCode"
                     type="text"
-                    placeholder="AB12CD34E5"
+                    placeholder="01ARZ3NDEKTSV4RRFFQ69G5FAV"
                     value={campaignCode}
                     onChange={(e) => setCampaignCode(e.target.value.toUpperCase())}
-                    maxLength={20}
+                    maxLength={INVITE_CODE_MAX_LENGTH}
                     required
                     disabled={isLoading}
                   />

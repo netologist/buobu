@@ -4,7 +4,7 @@
  */
 
 import { supabase, type SupabaseSession } from '@/lib/supabase';
-import { STORAGE_KEYS } from '@/lib/constants';
+import { INVITE_CODE_ERROR, INVITE_CODE_PATTERN, STORAGE_KEYS } from '@/lib/constants';
 import { INVITE_CODES_ENABLED, LOCAL_MODE } from '@/lib/feature-flags';
 
 type AuthChangeEvent = 'SIGNED_IN' | 'SIGNED_OUT' | 'TOKEN_REFRESHED' | 'INITIAL_SESSION' | 'SESSION_EXPIRED';
@@ -162,8 +162,8 @@ export async function register(email: string, password: string, campaignCode?: s
     if (!normalizedCode) {
       throw new Error('Invite code is required');
     }
-    if (!/^[A-Z0-9]{6,20}$/.test(normalizedCode)) {
-      throw new Error('Invite code must be 6-20 characters (A-Z, 0-9)');
+    if (!INVITE_CODE_PATTERN.test(normalizedCode)) {
+      throw new Error(INVITE_CODE_ERROR);
     }
 
     const { data: isValidCampaignCode } = await supabase.rpc('validate_campaign_code', {

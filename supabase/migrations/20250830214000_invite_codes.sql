@@ -62,8 +62,11 @@ REVOKE ALL ON TABLE public.invite_codes FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.validate_invite_code(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.consume_invite_code(TEXT, UUID) TO anon, authenticated;
 
--- Seed 100 invite codes (idempotent)
-INSERT INTO public.invite_codes (code)
-SELECT UPPER(SUBSTRING(MD5(('INVITE-' || gs)::TEXT), 1, 10))
-FROM generate_series(1, 100) AS gs
-ON CONFLICT (code) DO NOTHING;
+-- Invite codes are deliberately NOT seeded here.
+--
+-- An earlier version of this migration created 100 codes derived from
+-- MD5('INVITE-' || n). Because the derivation is in the repository, anyone who
+-- reads it can recompute every code, so those values were never credentials.
+-- Codes must be generated out of band (see docs/setup/supabase.md) and inserted
+-- directly into the target database, so that publishing the schema does not
+-- publish working registration codes.
