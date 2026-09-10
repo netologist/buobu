@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { fetchHtmlSafely, UrlNotAllowedError } from "./ssrf-guard.ts";
 
 type MetadataResponse = {
   title?: string;
@@ -44,46 +45,6 @@ function toAbsoluteUrl(candidate: string | undefined, base: URL): string | undef
   }
 }
 
-function isAllowedUrl(url: URL): boolean {
-  if (!["http:", "https:"].includes(url.protocol)) return false;
-  const host = url.hostname.toLowerCase();
-  if (host === "localhost" || host.endsWith(".local")) return false;
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
-    // IPv4 private range guard
-    if (host.startsWith("10.") || host.startsWith("127.") || host.startsWith("192.168.") || host.startsWith("169.254.")) return false;
-    const second = Number(host.split(".")[1] || "0");
-    if (host.startsWith("172.") && second >= 16 && second <= 31) return false;
-  }
-  return true;
-}
-
-async function fetchHtml(url: string): Promise<{ html: string; finalUrl: string }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort("timeout"), 5000);
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      redirect: "follow",
-      headers: {
-        "User-Agent": "buobu-bookmark-bot/1.0",
-        "Accept": "text/html,application/xhtml+xml",
-      },
-      signal: controller.signal,
-    });
-
-    const contentType = response.headers.get("content-type") || "";
-    if (!response.ok || !contentType.includes("text/html")) {
-      throw new Error("Invalid response");
-    }
-
-    const html = await response.text();
-    return { html: html.slice(0, 1_000_000), finalUrl: response.url };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -106,25 +67,11 @@ serve(async (req) => {
       });
     }
 
-    const inputUrl = new URL(rawUrl);
-    if (!isAllowedUrl(inputUrl)) {
-      return new Response(JSON.stringify({ error: "URL is not allowed" }), {
-        status: 400,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
-    }
-
-    const { html, finalUrl } = await fetchHtml(inputUrl.toString());
+    // Validates the protocol, the literal address, and every address the hostname
+    // resolves to, then follows redirects manually so each hop is re-validated
+    // before the next request is issued.
+    const { html, finalUrl } = await fetchHtmlSafely(rawUrl);
     const final = new URL(finalUrl);
-
-    // Re-validate the final URL after redirects (guards against SSRF via HTTP redirects
-    // or DNS rebinding where the initial check passes but the resolved target is private).
-    if (!isAllowedUrl(final)) {
-      return new Response(JSON.stringify({ error: "URL is not allowed" }), {
-        status: 400,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
-    }
 
     const title = parseMeta(html, "og:title") || parseTagText(html, "title");
     const description = parseMeta(html, "og:description") || parseMeta(html, "description", "name");
@@ -148,10 +95,18 @@ serve(async (req) => {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "metadata fetch failed";
-    const status = message.includes("timeout") || message.includes("aborted") ? 504 : 502;
-    return new Response(JSON.stringify({ error: message }), {
-      status,
+    if (error instanceof UrlNotAllowedError) {
+      return new Response(JSON.stringify({ error: "URL is not allowed" }), {
+        status: 400,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    // Deliberately one generic message: telling the caller apart "the host did not
+    // resolve" from "the host answered with a non-OK status" would make this a
+    // reachability and port oracle.
+    console.error("[fetch-bookmark-metadata]", error instanceof Error ? error.message : error);
+    return new Response(JSON.stringify({ error: "Failed to fetch metadata" }), {
+      status: 502,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }

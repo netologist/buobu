@@ -151,17 +151,14 @@ describe("register()", () => {
   });
 
   it("passes correct params to apply_campaign_benefit", async () => {
-    const mockUser = setupHappyPath();
+    setupHappyPath();
     await register(TEST_EMAIL, TEST_PASSWORD, VALID_CODE);
 
     const applyCall = vi
       .mocked(supabase.rpc)
       .mock.calls.find(([name]) => name === "apply_campaign_benefit");
     expect(applyCall).toBeDefined();
-    expect(applyCall![1]).toEqual({
-      p_code: VALID_CODE,
-      p_user_id: mockUser.id,
-    });
+    expect(applyCall![1]).toEqual({ p_code: VALID_CODE });
   });
 
   // ── localStorage — stripe_promotion_code_id ────────────────────────────────

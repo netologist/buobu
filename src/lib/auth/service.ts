@@ -195,10 +195,11 @@ export async function register(email: string, password: string, campaignCode?: s
 
   if (INVITE_CODES_ENABLED) {
     if (codeType === 'campaign') {
+      // consume_campaign_code resolves auth.uid() internally and attributes the
+      // use to the caller; it cannot be pointed at another user.
       await supabase.rpc('consume_campaign_code', {
         p_code: normalizedCode,
         p_campaign_type: 'invite',
-        p_user_id: data.user.id,
       });
     } else {
       // Referral code: use_referral_code resolves auth.uid() internally;
@@ -207,10 +208,11 @@ export async function register(email: string, password: string, campaignCode?: s
     }
 
     // Apply any campaign benefit (grant_plus_until_days, stripe_promotion_code_id).
-    // This is a SECURITY DEFINER RPC — the client cannot write to subscriptions directly.
+    // This is a SECURITY DEFINER RPC bound to auth.uid() — it applies the grant
+    // to the signed-in user only, requires that the code was consumed, and is
+    // single-shot. The client cannot write to subscriptions directly.
     const { data: benefit } = await supabase.rpc('apply_campaign_benefit', {
       p_code: normalizedCode,
-      p_user_id: data.user.id,
     });
 
     // If the code carries a Stripe promotion code, stash it for use at checkout.
