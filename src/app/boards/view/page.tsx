@@ -1,13 +1,9 @@
 "use client";
 
 /**
- * @deprecated ORPHANED ROUTE — `/boards/view` has NO in-app navigation pointing
- * to it (verified: zero references across `src/`). The swimlane create/edit UI and
- * the `<SwimlaneDialog>` instance in `SwimlanesTab` below are therefore unreachable
- * from the running app. Swimlane management is handled by the live entry points:
- * the compact menu (`AppLayout`), board settings (`BoardModal`), the habits board
- * (`HabitsBoard`), and the kanban header (`AppHeader`). Do not add new links here;
- * remove this route when ready.
+ * @deprecated Legacy boards view route.
+ * Modern board management is handled by direct board layouts and modal settings.
+ * Kept for backward compatibility with existing bookmarks.
  */
 
 import { Suspense, useEffect, useState, useCallback } from "react";

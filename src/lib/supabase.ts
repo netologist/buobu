@@ -43,7 +43,7 @@ export const supabase: SupabaseClient = LOCAL_MODE
   ? (localModeStub() as SupabaseClient)
   : createClient(...cloudCredentials(), {
       auth: {
-        flowType: 'pkce',        // SEC-02: PKCE instead of implicit
+        flowType: 'pkce',        // PKCE flow instead of implicit flow
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true,
