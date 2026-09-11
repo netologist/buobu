@@ -192,6 +192,20 @@ describe('logout', () => {
     await logout();
     expect(localStorage.getItem(USER_KEY)).toBeNull();
   });
+
+  it('clears session tokens and storage even when signOut returns an error', async () => {
+    seedCachedUser();
+    localStorage.setItem('buobu_entitlements', JSON.stringify({ plus: true }));
+    localStorage.setItem('sb-testproject-auth-token', 'mock-token');
+    vi.mocked(supabase.auth.signOut).mockResolvedValueOnce({
+      error: { message: 'Network error', name: 'AuthApiError', status: 500 } as any,
+    });
+
+    await expect(logout()).resolves.toBeUndefined();
+    expect(localStorage.getItem(USER_KEY)).toBeNull();
+    expect(localStorage.getItem('buobu_entitlements')).toBeNull();
+    expect(localStorage.getItem('sb-testproject-auth-token')).toBeNull();
+  });
 });
 
 describe('register', () => {

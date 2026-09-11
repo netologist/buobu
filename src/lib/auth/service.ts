@@ -274,10 +274,30 @@ export async function logout(): Promise<void> {
   if (LOCAL_MODE) return;
 
   _intentionalSignOut = true;
-  await supabase.auth.signOut();
-  setCachedUser(null);
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(STORAGE_KEYS.LAST_VISITED_PATH);
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn('[auth] supabase.auth.signOut error:', error.message);
+    }
+  } catch (err) {
+    console.warn('[auth] Unexpected error during supabase.auth.signOut:', err);
+  } finally {
+    setCachedUser(null);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.LAST_VISITED_PATH);
+        localStorage.removeItem(STORAGE_KEYS.ENTITLEMENTS);
+        // Fallback: purge any lingering Supabase auth token keys
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (err) {
+        console.warn('[auth] Failed to clear storage on logout:', err);
+      }
+    }
   }
 }
 
