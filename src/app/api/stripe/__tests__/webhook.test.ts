@@ -164,6 +164,19 @@ describe('POST /api/stripe/webhook — signature verification', () => {
     const json = await res.json() as { error: string };
     expect(json.error).toMatch(/signature/i);
   });
+
+  it('returns 500 when STRIPE_WEBHOOK_SECRET is not configured', async () => {
+    const originalSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    try {
+      const res = await POST(makeRequest('{}'));
+      expect(res.status).toBe(500);
+      const json = await res.json() as { error: string };
+      expect(json.error).toBe('Webhook configuration error');
+    } finally {
+      process.env.STRIPE_WEBHOOK_SECRET = originalSecret;
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------

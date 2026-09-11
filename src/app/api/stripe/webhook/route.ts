@@ -28,10 +28,8 @@ import { BILLING_ENABLED } from '@/lib/feature-flags';
 // Helpers
 // -----------------------------------------------------------------------
 
-function getWebhookSecret(): string {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not set');
-  return secret;
+function getWebhookSecret(): string | null {
+  return process.env.STRIPE_WEBHOOK_SECRET ?? null;
 }
 
 /** Mark an event as processed (idempotency). Returns false if already done. */
@@ -272,12 +270,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
   }
 
+  const webhookSecret = getWebhookSecret();
+  if (!webhookSecret) {
+    console.error('[webhook] STRIPE_WEBHOOK_SECRET is not configured');
+    return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 });
+  }
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, getWebhookSecret());
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
+    console.warn('[webhook] Signature verification failed:', err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { error: `Webhook signature verification failed: ${err instanceof Error ? err.message : String(err)}` },
+      { error: 'Invalid webhook signature' },
       { status: 400 },
     );
   }
