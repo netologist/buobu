@@ -162,25 +162,28 @@ async function authenticate(request: Request, env: Env): Promise<McpContext> {
   return buildContext(resolved, env);
 }
 
-function getCorsOrigin(request: Request, env: Env): string {
+function getCorsOrigin(request: Request, env: Env): string | null {
   const requestOrigin = request.headers.get("origin");
 
   if (!env.MCP_ALLOWED_ORIGIN) {
     return requestOrigin ?? "*";
   }
 
-  if (!requestOrigin || requestOrigin === env.MCP_ALLOWED_ORIGIN) {
+  if (requestOrigin === env.MCP_ALLOWED_ORIGIN) {
     return env.MCP_ALLOWED_ORIGIN;
   }
 
-  throw new McpAuthError("Origin not allowed");
+  return null;
 }
 
 function withCors(response: Response, request: Request, env: Env): Response {
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Headers", "authorization, content-type, last-event-id, mcp-protocol-version, mcp-session-id");
   headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-  headers.set("Access-Control-Allow-Origin", getCorsOrigin(request, env));
+  const corsOrigin = getCorsOrigin(request, env);
+  if (corsOrigin) {
+    headers.set("Access-Control-Allow-Origin", corsOrigin);
+  }
   headers.set("Access-Control-Expose-Headers", "mcp-protocol-version, mcp-session-id");
   headers.set("Vary", "Origin");
 
@@ -201,9 +204,17 @@ async function handleMcpRequest(request: Request, env: Env): Promise<Response> {
   return transport.handleRequest(request);
 }
 
-export default {
+const workerHandler = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const requestOrigin = request.headers.get("origin");
+
+    if (env.MCP_ALLOWED_ORIGIN && requestOrigin && requestOrigin !== env.MCP_ALLOWED_ORIGIN) {
+      return Response.json(
+        { jsonrpc: "2.0", error: { code: -32001, message: "Origin not allowed" }, id: null },
+        { status: 403 }
+      );
+    }
 
     try {
       if (request.method === "OPTIONS" && MCP_PATHS.has(url.pathname)) {
@@ -225,7 +236,7 @@ export default {
         return withCors(
           Response.json(
             { jsonrpc: "2.0", error: { code: -32001, message: error.message }, id: null },
-            { status: error.message === "Origin not allowed" ? 403 : 401 }
+            { status: 401 }
           ),
           request,
           env
@@ -249,3 +260,5 @@ export default {
     }
   },
 };
+
+export default workerHandler;
