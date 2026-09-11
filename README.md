@@ -25,9 +25,9 @@ Kanban tasks, habits, routines, time blocks, notes, mindmaps, whiteboards and bo
 
 ## Preview
 
-<https://example.com> — replace with your own deployment's domain.
+<https://buobu.com> — replace with your own deployment's domain.
 
-![The buobu Tasks board: boards and swimlanes down the left, kanban columns with cards across the middle, and the app navigation along the top](docs/assets/buobu-tasks-kanban.jpg)
+![The buobu Tasks board: boards and swimlanes down the left, kanban columns with cards across the middle, and the app navigation along the top](docs/assets/buobu-tasks-kanban.png)
 
 
 
