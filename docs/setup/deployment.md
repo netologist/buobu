@@ -51,6 +51,22 @@ They stay disabled because they cannot be made generic. A deploy needs an accoun
 
 One thing the templates do not cover: [`main.tf`](../../infra/terraform/main.tf) still names a Terraform Cloud organization and workspace prefix in its `backend` block, which cannot read variables. Edit that block, or move it to a partial backend configuration, before applying. Everything else — the Pages project, the Supabase project, the domains — comes from `project_name` and `root_domain`.
 
+## Dependabot
+
+[`.github/dependabot.yml`](../../.github/dependabot.yml) opens version updates weekly, on Monday morning. It covers three things:
+
+| Ecosystem | Directory | What it watches |
+|---|---|---|
+| `npm` | `/` | the root manifest and `pnpm-lock.yaml` — one entry for the whole workspace |
+| `github-actions` | `/` | the action versions pinned in `ci.yml` |
+| `terraform` | `/infra/terraform` | the `cloudflare` and `supabase` providers |
+
+Updates are grouped so a week of bumps is a handful of reviews rather than one per package. The families that share a peer contract — `@tiptap/*`, `@fullcalendar/*`, `@dnd-kit/*`, `react` with `react-dom` and their types, the test stack — each get one pull request whatever the bump size, because a partial bump there is a broken build. Everything else splits in two: development patch/minor in one, production patch/minor in another. A major outside those families gets its own pull request, since a major is a migration.
+
+Groups are matched top to bottom and the first match wins, so if you add one, put it above the two catch-all groups or it will never be reached.
+
+Two limits worth knowing. Grouping applies to version updates; security updates are a repository setting, not part of this file. And `supabase/functions` is not covered: Dependabot's Deno ecosystem reads `deno.json` and `deno.jsonc` (JSR and npm specifiers), and the edge functions have neither — they import `https://deno.land/std@0.224.0/...` by URL from the source file. That pin is updated by hand.
+
 ## Terraform (optional)
 
 [`infra/terraform`](../../infra/terraform) provisions the Cloudflare zone's DNS records and Pages project, and optionally the Supabase project itself. Worker custom domains are deliberately **not** managed here: they are attached in the Cloudflare dashboard, so that neither Terraform nor wrangler has to own that binding.

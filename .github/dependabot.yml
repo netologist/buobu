@@ -1,0 +1,102 @@
+# Dependency updates. One pull request per group, weekly, so a week of bumps
+# costs a handful of reviews instead of sixty.
+#
+# Groups are matched top to bottom and the first match wins, so the families
+# that have to move together come before the catch-all patch/minor groups.
+# A major outside those families is left ungrouped on purpose — a major is a
+# migration, not a version bump, and gets its own pull request to review. Inside
+# a family a major rides along with its siblings, which is the point of the
+# family: react 19 without react-dom 19 is a broken tree.
+#
+# Dependabot reads pnpm-lock.yaml through the `npm` ecosystem. The Supabase edge
+# functions are Deno and import by URL (`https://deno.land/std@...`) with no
+# deno.json, which is the only thing Dependabot's `deno` ecosystem reads, so
+# those specifiers are updated by hand.
+
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    groups:
+      # Sibling packages that share a version range and a peer contract. A
+      # partial bump here is a broken build, not a slow one.
+      tiptap:
+        patterns:
+          - '@tiptap/*'
+      fullcalendar:
+        patterns:
+          - '@fullcalendar/*'
+      dnd-kit:
+        patterns:
+          - '@dnd-kit/*'
+      react:
+        patterns:
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+      testing:
+        patterns:
+          - vitest
+          - '@vitest/*'
+          - '@testing-library/*'
+          - '@playwright/test'
+          - '@vitejs/plugin-react'
+          - jsdom
+          - msw
+          - fake-indexeddb
+      # Everything left over, split by where it lands: development updates
+      # cannot reach a deploy, production updates can.
+      dev-patch-minor:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      prod-patch-minor:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+
+  # The workflows pin actions/checkout, pnpm/action-setup and
+  # actions/setup-node; those are dependencies too.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: terraform
+    directory: /infra/terraform
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      providers:
+        patterns:
+          - '*'
