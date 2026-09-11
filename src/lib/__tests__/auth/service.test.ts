@@ -224,6 +224,10 @@ describe('register', () => {
 });
 
 describe('updatePassword', () => {
+  beforeEach(() => {
+    vi.mocked(supabase.auth.signOut).mockClear();
+  });
+
   it('calls supabase.auth.updateUser with new password', async () => {
     vi.mocked(supabase.auth.updateUser).mockResolvedValueOnce({
       data: { user: makeSupabaseUser() as never },
@@ -241,6 +245,31 @@ describe('updatePassword', () => {
     });
 
     await expect(updatePassword('pw')).rejects.toThrow();
+  });
+
+  // A password change is the only point at which a user can eject an attacker who
+  // holds a session lifted from localStorage, so this has to be asserted rather
+  // than assumed -- Supabase keeps other sessions alive by default.
+  it('revokes every other session after a successful change', async () => {
+    vi.mocked(supabase.auth.updateUser).mockResolvedValueOnce({
+      data: { user: makeSupabaseUser() as never },
+      error: null,
+    });
+
+    await updatePassword('newPassword123');
+
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'others' });
+  });
+
+  it('leaves other sessions alone when the change failed', async () => {
+    vi.mocked(supabase.auth.updateUser).mockResolvedValueOnce({
+      data: { user: null as never },
+      error: { message: 'Password too short' } as never,
+    });
+
+    await expect(updatePassword('pw')).rejects.toThrow();
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
   });
 });
 

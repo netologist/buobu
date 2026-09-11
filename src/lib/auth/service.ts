@@ -284,6 +284,22 @@ export async function logout(): Promise<void> {
 export async function updatePassword(newPassword: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
+
+  // A password change is the moment a user expects to lock an attacker out, but
+  // Supabase leaves every other session alive by default. `scope: 'others'`
+  // revokes all refresh tokens except this one, so a session lifted out of
+  // localStorage -- the exposure in H-07 -- stops working here. The current
+  // session is deliberately kept: the user is standing in it.
+  //
+  // A failure is logged rather than thrown, because the password did change and
+  // reporting an error would invite the user to try again for no reason.
+  const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
+  if (revokeError) {
+    console.error(
+      '[auth] password changed but other sessions were not revoked:',
+      revokeError.message,
+    );
+  }
 }
 
 export async function updateEmail(newEmail: string): Promise<void> {

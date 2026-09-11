@@ -1,6 +1,43 @@
+# Header rules for the static export, read by Cloudflare Pages (and Netlify).
+# Everything here applies to out/ verbatim; there is no server to vary it per
+# request, which is why the two 'unsafe-*' script tokens cannot become a nonce.
+#
+# script-src 'unsafe-inline'
+#   Next.js emits one inline hydration bootstrap per page. With no server there is
+#   no nonce to mint, so the only alternative is hashing every inline script after
+#   each build.
+#
+# script-src 'unsafe-eval'  -- REQUIRED, and not because of anything in src/
+#   Two dependencies call the Function constructor:
+#     - an object-detection shim does Function("return this")() at module load
+#     - Mermaid's dagre/graphlib builds its layout expression with Function(...)
+#   Removing it kills the app at startup: the bundle throws while chunks are still
+#   being evaluated, before React hydrates, and the page renders
+#   "Application error: a client-side exception has occurred". Verified in a
+#   browser. Do not remove it without also removing Mermaid.
+#
+# require-trusted-types-for 'script'  -- deliberately NOT set, and it was tried
+#   Trusted Types is the natural fix for the innerHTML sinks and it does not work
+#   here. It makes the Function constructor unusable, so the shim above throws
+#   during chunk evaluation; that aborts evaluation of the whole bundle, including
+#   the module that would install the policy. The result is an app that never
+#   boots, with the policy unregistered (verified: trustedTypes.getPolicy('default')
+#   came back null after the page errored). Enabling it needs Mermaid and the shim
+#   gone, or an inline bootstrap ahead of the first chunk holding its own inline
+#   sanitiser -- which is a worse thing to own than the problem it solves.
+#
+# connect-src https://*.workers.dev
+#   The MCP and referral Workers live on that domain, and the account subdomain is
+#   not known at build time. This is the one wildcard here, and a wildcard is a
+#   usable destination for anything a future injection manages to send.
+#
+# img-src https:
+#   Bookmark previews render og:image from arbitrary third-party sites, so the
+#   scheme has to stay open. That is also an exfiltration path; closing it means
+#   proxying preview images.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.workers.dev https://*.example.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; frame-ancestors 'none';
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.workers.dev https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
