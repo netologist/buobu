@@ -25,11 +25,11 @@ Kanban tasks, habits, routines, time blocks, notes, mindmaps, whiteboards and bo
 
 ## Preview
 
-<https://buobu.com> — replace with your own deployment's domain.
+<https://buobu.com> — try the live app there before you clone anything.
 
 ![The buobu Tasks board: boards and swimlanes down the left, kanban columns with cards across the middle, and the app navigation along the top](docs/assets/buobu-tasks-kanban.png)
 
-
+[Screenshots](docs/assets/) — the other five: [habits](docs/assets/buobu-habits.png), [mindmaps](docs/assets/buobu-mindmaps.png), [notes](docs/assets/buobu-notes.png), [whiteboards](docs/assets/buobu-whiteboards.png) and the [mobile tasks view](docs/assets/buobu-tasks-mobile.png).
 
 ## What you get
 
@@ -220,6 +220,7 @@ The end-to-end suite signs in with a real account, so it needs `E2E_TEST_EMAIL` 
 
 | Where | What |
 |---|---|
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Setup, the checks CI runs, the test and commit conventions, the pull request flow |
 | [`docs/setup/`](./docs/setup/) | Local mode, Supabase, the Cloudflare Workers, billing, testing, deployment |
 | [`docs/architecture/`](./docs/architecture/) | System overview, the storage and replication model, data flow, per-module code maps |
 | [`docs/adr/`](./docs/adr/) | Decision records. Start with [ADR-014](./docs/adr/014-local-mode.md) on the two modes |
@@ -231,3 +232,5 @@ The end-to-end suite signs in with a real account, so it needs `E2E_TEST_EMAIL` 
 ## License
 
 [AGPL-3.0](./LICENSE). You are free to run, modify and share this software. If you run a modified version as a network service, you must offer its source to the people using it.
+
+Commercial use is permitted under the AGPL. If those terms do not work for you — embedding the code in a closed product, for instance — a commercial license is available: <hasan@ozgan.net>. The **Buobu** name and logo are not licensed for commercial use.
