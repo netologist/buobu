@@ -10,6 +10,25 @@ import '@testing-library/jest-dom';
 // Polyfill IndexedDB for RxDB/Dexie in jsdom
 import 'fake-indexeddb/auto';
 
+class MemoryStorage implements Storage {
+  private data = new Map<string, string>();
+  get length() { return this.data.size; }
+  clear() { this.data.clear(); }
+  getItem(key: string) { return this.data.get(key) ?? null; }
+  key(index: number) { return Array.from(this.data.keys())[index] ?? null; }
+  removeItem(key: string) { this.data.delete(key); }
+  setItem(key: string, value: string) { this.data.set(key, String(value)); }
+}
+
+if (typeof window !== 'undefined') {
+  const memLocal = new MemoryStorage();
+  const memSession = new MemoryStorage();
+  Object.defineProperty(window, 'localStorage', { value: memLocal, writable: true, configurable: true });
+  Object.defineProperty(window, 'sessionStorage', { value: memSession, writable: true, configurable: true });
+  Object.defineProperty(globalThis, 'localStorage', { value: memLocal, writable: true, configurable: true });
+  Object.defineProperty(globalThis, 'sessionStorage', { value: memSession, writable: true, configurable: true });
+}
+
 import { vi, beforeEach, afterEach } from 'vitest';
 import { STORAGE_KEYS } from '@/lib/constants';
 
