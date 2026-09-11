@@ -16,6 +16,23 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
+function getOAuthErrorMessage(errorCode: string | null): string | null {
+  if (!errorCode) return null;
+  switch (errorCode) {
+    case 'access_denied':
+      return 'Access was denied. Please try again.';
+    case 'server_error':
+    case 'temporarily_unavailable':
+      return 'Authentication service is temporarily unavailable. Please try again later.';
+    case 'invalid_request':
+      return 'Invalid authentication request. Please try again.';
+    case 'unauthorized_client':
+      return 'This application is not authorized to perform authentication.';
+    default:
+      return 'Authentication failed. Please try again.';
+  }
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,7 +44,7 @@ function LoginForm() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  const oauthError = searchParams.get('error');
+  const oauthError = getOAuthErrorMessage(searchParams.get('error'));
   const resetSuccess = searchParams.get('reset') === 'success';
 
   const handleSubmit = async (e: React.FormEvent) => {
