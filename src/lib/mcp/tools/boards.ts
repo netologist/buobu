@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerBoardsTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -10,6 +10,7 @@ export function registerBoardsTools(server: McpServer, ctx: McpContext) {
       archived: z.boolean().optional().default(false).describe("Include archived boards"),
     },
     async ({ archived }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("boards")
         .select("*")
@@ -30,6 +31,7 @@ export function registerBoardsTools(server: McpServer, ctx: McpContext) {
     "Get a single board with columns",
     { id: z.string().describe("Board ID") },
     async ({ id }) => {
+      requireScope(ctx, "read");
       const { data, error } = await ctx.supabase
         .from("boards")
         .select("*")
@@ -51,6 +53,7 @@ export function registerBoardsTools(server: McpServer, ctx: McpContext) {
       archived: z.boolean().optional().default(false).describe("Include archived"),
     },
     async ({ boardId, archived }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("swimlanes")
         .select("*")

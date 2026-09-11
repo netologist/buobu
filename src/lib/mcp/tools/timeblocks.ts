@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 const recurrenceSchema = z.object({
   type: z.enum(["daily", "weekly", "monthly", "yearly", "custom"]).describe("Recurrence type"),
@@ -22,6 +22,7 @@ export function registerTimeblocksTools(server: McpServer, ctx: McpContext) {
       archived: z.boolean().optional().default(false).describe("Include archived time blocks"),
     },
     async ({ boardId, swimlaneId, archived }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("timeblocks")
         .select("*")
@@ -45,6 +46,7 @@ export function registerTimeblocksTools(server: McpServer, ctx: McpContext) {
     "Get a single time block by ID",
     { id: z.string().describe("Time block ID") },
     async ({ id }) => {
+      requireScope(ctx, "read");
       const { data, error } = await ctx.supabase
         .from("timeblocks")
         .select("*")

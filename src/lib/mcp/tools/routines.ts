@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerRoutinesTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -16,6 +16,7 @@ export function registerRoutinesTools(server: McpServer, ctx: McpContext) {
       archived: z.boolean().optional().default(false).describe("Include archived"),
     },
     async ({ boardId, swimlaneId, type, archived }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("routines")
         .select("*")
@@ -44,6 +45,7 @@ export function registerRoutinesTools(server: McpServer, ctx: McpContext) {
       limit: z.number().optional().default(200).describe("Max results"),
     },
     async ({ routineId, startDate, endDate, limit }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("routine_logs")
         .select("*")

@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerNotesTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -14,6 +14,7 @@ export function registerNotesTools(server: McpServer, ctx: McpContext) {
       limit: z.number().optional().default(100).describe("Max results"),
     },
     async ({ boardId, swimlaneId, search, archived, limit }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("notes")
         .select("id, \"boardId\", \"swimlaneId\", title, tags, pinned, archived, \"createdAt\", \"updatedAt\"")
@@ -38,6 +39,7 @@ export function registerNotesTools(server: McpServer, ctx: McpContext) {
     "Get a single note with full content",
     { id: z.string().describe("Note ID") },
     async ({ id }) => {
+      requireScope(ctx, "read");
       const { data, error } = await ctx.supabase
         .from("notes")
         .select("*")

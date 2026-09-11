@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerBookmarksTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -19,6 +19,7 @@ export function registerBookmarksTools(server: McpServer, ctx: McpContext) {
       limit: z.number().optional().default(100).describe("Max results"),
     },
     async ({ boardId, swimlaneId, status, domain, search, archived, limit }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("bookmarks")
         .select("*")

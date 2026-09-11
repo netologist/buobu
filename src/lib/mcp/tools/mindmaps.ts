@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerMindmapsTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -12,6 +12,7 @@ export function registerMindmapsTools(server: McpServer, ctx: McpContext) {
       archived: z.boolean().optional().default(false).describe("Include archived"),
     },
     async ({ boardId, swimlaneId, archived }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("mindmaps")
         .select("id, \"boardId\", \"swimlaneId\", title, archived, \"createdAt\", \"updatedAt\"")
@@ -34,6 +35,7 @@ export function registerMindmapsTools(server: McpServer, ctx: McpContext) {
     "Get a mindmap with all nodes",
     { id: z.string().describe("Mindmap ID") },
     async ({ id }) => {
+      requireScope(ctx, "read");
       const { data, error } = await ctx.supabase
         .from("mindmaps")
         .select("*")

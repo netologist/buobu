@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerAnalyticsTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -10,6 +10,7 @@ export function registerAnalyticsTools(server: McpServer, ctx: McpContext) {
       habitId: z.string().optional().describe("Specific habit ID (all if omitted)"),
     },
     async ({ habitId }) => {
+      requireScope(ctx, "read");
       // Fetch habits
       let habitsQuery = ctx.supabase
         .from("habits")
@@ -67,6 +68,7 @@ export function registerAnalyticsTools(server: McpServer, ctx: McpContext) {
       boardId: z.string().optional().describe("Filter by board ID"),
     },
     async ({ weeks, boardId }) => {
+      requireScope(ctx, "read");
       const numWeeks = weeks ?? 8;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - numWeeks * 7);
@@ -113,6 +115,7 @@ export function registerAnalyticsTools(server: McpServer, ctx: McpContext) {
       routineId: z.string().optional().describe("Filter by routine ID"),
     },
     async ({ days, routineId }) => {
+      requireScope(ctx, "read");
       const numDays = days ?? 30;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - numDays);
@@ -161,10 +164,11 @@ export function registerAnalyticsTools(server: McpServer, ctx: McpContext) {
     "Spending summary from task transactions, grouped by type and optionally by month",
     {
       boardId: z.string().optional().describe("Filter by board ID"),
-      startDate: z.string().optional().describe("Start date (YYYY-MM-DD)"),
-      endDate: z.string().optional().describe("End date (YYYY-MM-DD)"),
+      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid start date format, expected YYYY-MM-DD").optional().describe("Start date (YYYY-MM-DD)"),
+      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid end date format, expected YYYY-MM-DD").optional().describe("End date (YYYY-MM-DD)"),
     },
     async ({ boardId, startDate, endDate }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("tasks")
         .select("transactions, \"boardId\"")
@@ -223,9 +227,10 @@ export function registerAnalyticsTools(server: McpServer, ctx: McpContext) {
     "analytics_daily_summary",
     "Get a daily summary: tasks due today, habits to complete, routines pending",
     {
-      date: z.string().optional().describe("Date (YYYY-MM-DD), defaults to today"),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format, expected YYYY-MM-DD").optional().describe("Date (YYYY-MM-DD), defaults to today"),
     },
     async ({ date }) => {
+      requireScope(ctx, "read");
       const targetDate = date ?? new Date().toISOString().slice(0, 10);
       const dayOfWeek = new Date(targetDate).getDay();
 

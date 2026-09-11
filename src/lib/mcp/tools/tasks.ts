@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { McpContext } from "../context";
+import { type McpContext, requireScope } from "../context";
 
 export function registerTasksTools(server: McpServer, ctx: McpContext) {
   server.tool(
@@ -26,6 +26,7 @@ export function registerTasksTools(server: McpServer, ctx: McpContext) {
       limit: z.number().optional().default(100).describe("Max results"),
     },
     async ({ boardId, swimlaneId, columnId, priority, dueBefore, archived, limit }) => {
+      requireScope(ctx, "read");
       let query = ctx.supabase
         .from("tasks")
         .select("*")
@@ -55,6 +56,7 @@ export function registerTasksTools(server: McpServer, ctx: McpContext) {
     "Get a single task by ID",
     { id: z.string().describe("Task ID") },
     async ({ id }) => {
+      requireScope(ctx, "read");
       const { data, error } = await ctx.supabase
         .from("tasks")
         .select("*")
