@@ -143,9 +143,9 @@ function buildZip(files: Array<{ name: string; content: Uint8Array }>): Uint8Arr
 // Self-contained HTML viewer template
 // ---------------------------------------------------------------------------
 
-function buildViewerHtml(exportJson: string): string {
-  // Escape </script> sequences inside the JSON so they don't break the script tag
-  const safeJson = exportJson.replace(/<\/script>/gi, "<\\/script>");
+export function buildViewerHtml(exportJson: string): string {
+  // Escape < characters so JSON cannot break out of the script tag
+  const safeJson = exportJson.replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -253,6 +253,25 @@ function fmt(d){
 }
 function strip(h){return (h||'').replace(/#+\\s/g,'').replace(/\\*\\*/g,'').replace(/\\*/g,'').replace(/_/g,'').replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g,'$1').replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim();}
 
+function escHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function safeUrl(u){
+  if(!u) return '#';
+  const trimmed = String(u).trim();
+  if(/^(https?:\\/\\/|mailto:|tel:|\\/|#)/i.test(trimmed)) {
+    return escHtml(trimmed);
+  }
+  return '#';
+}
+function safeColor(c){
+  if(typeof c !== 'string') return '';
+  const trimmed = c.trim();
+  if(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(trimmed)) return trimmed;
+  if(/^(rgb|hsl)a?\\([\\d\\s,%.]+\\)$/i.test(trimmed)) return trimmed;
+  return '';
+}
+
 // ---------------------------------------------------------------------------
 // Minimal Markdown → HTML renderer (zero dependencies)
 // Supports: headings, bold, italic, inline code, fenced code blocks,
@@ -260,75 +279,75 @@ function strip(h){return (h||'').replace(/#+\\s/g,'').replace(/\\*\\*/g,'').repl
 // ---------------------------------------------------------------------------
 function mdToHtml(md){
   if(!md) return '';
-  let s = md;
-  // Fenced code blocks
-  s = s.replace(/\`\`\`([\\s\\S]*?)\`\`\`/g, (_,c)=>\`<pre><code>\${escHtml(c.trim())}</code></pre>\`);
-  // Process line by line for block elements
+  const fences = [];
+  let s = md.replace(/\`\`\`([\\s\\S]*?)\`\`\`/g, (_, c) => {
+    fences.push('<pre><code>' + escHtml(c.trim()) + '</code></pre>');
+    return '%%FENCE' + (fences.length - 1) + '%%';
+  });
   const lines = s.split('\\n');
   const out = [];
   let i = 0;
   while(i < lines.length){
     const line = lines[i];
-    // Headings
+    const fenceMatch = line.match(/^%%FENCE(\\d+)%%$/);
+    if(fenceMatch){
+      out.push(fences[+fenceMatch[1]]);
+      i++;
+      continue;
+    }
     const hm = line.match(/^(#{1,6})\\s+(.*)/);
     if(hm){ out.push(\`<h\${hm[1].length}>\${inlineMd(hm[2])}</h\${hm[1].length}>\`); i++; continue; }
-    // HR
     if(/^([-*_]){3,}\\s*$/.test(line)){ out.push('<hr>'); i++; continue; }
-    // Blockquote
     if(line.startsWith('> ')){
       const bqLines=[];
       while(i<lines.length && lines[i].startsWith('> ')){ bqLines.push(lines[i].slice(2)); i++; }
       out.push(\`<blockquote>\${mdToHtml(bqLines.join('\\n'))}</blockquote>\`);
       continue;
     }
-    // Unordered list
     if(/^[-*+]\\s/.test(line)){
       const ulItems=[];
       while(i<lines.length && /^[-*+]\\s/.test(lines[i])){ ulItems.push(\`<li>\${inlineMd(lines[i].replace(/^[-*+]\\s/,''))}</li>\`); i++; }
       out.push(\`<ul>\${ulItems.join('')}</ul>\`);
       continue;
     }
-    // Ordered list
     if(/^\\d+\\.\\s/.test(line)){
       const olItems=[];
       while(i<lines.length && /^\\d+\\.\\s/.test(lines[i])){ olItems.push(\`<li>\${inlineMd(lines[i].replace(/^\\d+\\.\\s/,''))}</li>\`); i++; }
       out.push(\`<ol>\${olItems.join('')}</ol>\`);
       continue;
     }
-    // Pre-rendered block (from fenced code pass above)
-    if(line.startsWith('<pre>')||line.startsWith('<blockquote>')||line.startsWith('<ul>')||line.startsWith('<ol>')||line.startsWith('<hr>')||/^<h[1-6]>/.test(line)){
-      out.push(line); i++; continue;
-    }
-    // Blank line — paragraph break
-    if(line.trim()==='') { out.push(''); i++; continue; }
-    // Paragraph text
+    if(line.trim()===''){ out.push(''); i++; continue; }
     const paraLines=[];
-    while(i<lines.length && lines[i].trim()!=='' && !/^(#{1,6}\\s|[-*+]\\s|\\d+\\.\\s|> |[-*_]{3}|<pre>)/.test(lines[i])){ paraLines.push(lines[i]); i++; }
+    while(i<lines.length && lines[i].trim()!=='' && !/^(#{1,6}\\s|[-*+]\\s|\\d+\\.\\s|> |[-*_]{3}|%%FENCE)/.test(lines[i])){
+      paraLines.push(lines[i]);
+      i++;
+    }
     if(paraLines.length) out.push(\`<p>\${inlineMd(paraLines.join(' '))}</p>\`);
   }
   return out.filter(l=>l!=='').join('\\n');
 }
 function inlineMd(s){
-  // inline code first (protect from other replacements)
-  const codes=[];
-  s=s.replace(/\`([^\`]+)\`/g,(_,c)=>{codes.push(escHtml(c)); return \`%%CODE\${codes.length-1}%%\`;});
-  // images before links
-  s=s.replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g,'<img src="$2" alt="$1" style="max-width:100%">');
-  // links
-  s=s.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-  // bold+italic
-  s=s.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g,'<strong><em>$1</em></strong>');
-  // bold
-  s=s.replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>');
-  s=s.replace(/__(.+?)__/g,'<strong>$1</strong>');
-  // italic
-  s=s.replace(/\\*(.+?)\\*/g,'<em>$1</em>');
-  s=s.replace(/_(.+?)_/g,'<em>$1</em>');
-  // strikethrough
-  s=s.replace(/~~(.+?)~~/g,'<s>$1</s>');
-  // restore inline code
-  s=s.replace(/%%CODE(\\d+)%%/g,(_,n)=>\`<code>\${codes[+n]}</code>\`);
-  return s;
+  const tokens = [];
+  function addToken(html){
+    tokens.push(html);
+    return '%%TOK' + (tokens.length - 1) + '%%';
+  }
+  let res = s.replace(/\`([^\`]+)\`/g, (_, c) => addToken('<code>' + escHtml(c) + '</code>'));
+  res = res.replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g, (_, alt, src) => {
+    return addToken('<img src=\"' + safeUrl(src) + '\" alt=\"' + escHtml(alt) + '\" style=\"max-width:100%\">');
+  });
+  res = res.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, (_, text, href) => {
+    return addToken('<a href=\"' + safeUrl(href) + '\" target=\"_blank\" rel=\"noopener noreferrer\">' + escHtml(text) + '</a>');
+  });
+  res = escHtml(res);
+  res = res.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g, '<strong><em>$1</em></strong>');
+  res = res.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+  res = res.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  res = res.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+  res = res.replace(/_(.+?)_/g, '<em>$1</em>');
+  res = res.replace(/~~(.+?)~~/g, '<s>$1</s>');
+  res = res.replace(/%%TOK(\\d+)%%/g, (_, n) => tokens[+n]);
+  return res;
 }
 
 const sections = [
@@ -411,27 +430,24 @@ function cardHtml(item, type){
   const sub = [board?board.name:'', swimlane?swimlane.name:''].filter(Boolean).join(' · ');
   let badges = '';
   if(type==='tasks'){
-    if(item.priority) badges += \`<span class="badge badge-\${item.priority}">\${item.priority}</span>\`;
-    if(item.archived) badges += \`<span class="badge badge-default">Archived</span>\`;
+    if(item.priority) badges += \`<span class="badge badge-\${escHtml(item.priority)}">\${escHtml(item.priority)}</span>\`;
+    if(item.archived) badges += '<span class="badge badge-default">Archived</span>';
   }
   if(type==='habits' && item.color){
-    badges += \`<span class="badge badge-default" style="background:\${item.color}22;color:\${item.color}">Habit</span>\`;
+    const c = safeColor(item.color);
+    if(c) badges += \`<span class="badge badge-default" style="background:\${c}22;color:\${c}">Habit</span>\`;
   }
-  if(type==='notes' && item.pinned) badges += \`<span class="badge badge-primary">Pinned</span>\`;
-  if(type==='bookmarks') badges += \`<span class="badge badge-default">\${item.status||'unread'}</span>\`;
+  if(type==='notes' && item.pinned) badges += '<span class="badge badge-primary">Pinned</span>';
+  if(type==='bookmarks') badges += \`<span class="badge badge-default">\${escHtml(item.status||'unread')}</span>\`;
 
   const title = item.title || item.url || 'Untitled';
   const preview = type==='notes'||type==='tasks' ? strip(item.description||item.content||'').slice(0,120) : (item.description||'').slice(0,120);
-  return \`<div class="card" onclick='openDetail(\${JSON.stringify(type)},\${JSON.stringify(item.id)})'>
+  return \`<div class="card" data-type="\${escHtml(type)}" data-id="\${escHtml(item.id)}">
     <div class="card-title">\${escHtml(title)}</div>
     \${preview ? \`<div class="card-sub">\${escHtml(preview)}</div>\` : ''}
     \${sub ? \`<div class="card-sub" style="font-size:11px">\${escHtml(sub)}</div>\` : ''}
     \${badges ? \`<div class="badges">\${badges}</div>\` : ''}
   </div>\`;
-}
-
-function escHtml(s){
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function renderContent(){
@@ -477,7 +493,7 @@ function renderDetail(){
   html += '</div>';
 
   if(detailType==='tasks'){
-    if(detailItem.priority) html += \`<div class="detail-section"><div class="section-label">Priority</div><span class="badge badge-\${detailItem.priority}">\${detailItem.priority}</span></div>\`;
+    if(detailItem.priority) html += \`<div class="detail-section"><div class="section-label">Priority</div><span class="badge badge-\${escHtml(detailItem.priority)}">\${escHtml(detailItem.priority)}</span></div>\`;
     if(detailItem.deadline) html += \`<div class="detail-section"><div class="section-label">Deadline</div><span>\${fmt(detailItem.deadline)}</span></div>\`;
     if(detailItem.description) html += \`<div class="detail-section"><div class="section-label">Description</div><div class="prose">\${mdToHtml(detailItem.description)}</div></div>\`;
     const labels = detailItem.labels||[];
@@ -522,7 +538,7 @@ function renderDetail(){
   }
 
   if(detailType==='bookmarks'){
-    if(detailItem.url) html += \`<div class="detail-section"><div class="section-label">URL</div><a href="\${escHtml(detailItem.url)}" target="_blank" rel="noopener">\${escHtml(detailItem.url)}</a></div>\`;
+    if(detailItem.url) html += \`<div class="detail-section"><div class="section-label">URL</div><a href="\${safeUrl(detailItem.url)}" target="_blank" rel="noopener noreferrer">\${escHtml(detailItem.url)}</a></div>\`;
     if(detailItem.description) html += \`<div class="detail-section"><div class="section-label">Description</div><div class="prose">\${escHtml(detailItem.description)}</div></div>\`;
     const tags = detailItem.tags||[];
     if(tags.length) html += \`<div class="detail-section"><div class="section-label">Tags</div><div class="badges">\${tags.map(t=>\`<span class="badge badge-default">\${escHtml(t)}</span>\`).join('')}</div></div>\`;
@@ -563,7 +579,8 @@ function renderDetail(){
         if(!children.length) return '';
         return children.map(n=>{
           const indent = depth*16;
-          const dot = n.color ? \`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:\${n.color};margin-right:6px;flex-shrink:0"></span>\` : '';
+          const c = safeColor(n.color);
+          const dot = c ? \`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:\${c};margin-right:6px;flex-shrink:0"></span>\` : '';
           return \`<div style="display:flex;align-items:center;padding:3px 0 3px \${indent}px;font-size:13px;border-left:\${depth>0?'1px solid var(--border)':'none'};margin-left:\${depth>0?'8px':'0'}">\${dot}<span style="font-weight:\${depth===0?'600':'400'}">\${escHtml(n.label||'')}</span></div>\${renderMindmapTree(n.id,depth+1)}\`;
         }).join('');
       }
@@ -596,6 +613,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('filter-swimlane').addEventListener('change',e=>{
     filterSwimlaneId=e.target.value;
     renderContent();
+  });
+  document.getElementById('content').addEventListener('click',e=>{
+    const card = e.target.closest('.card[data-id]');
+    if(card){
+      openDetail(card.getAttribute('data-type'), card.getAttribute('data-id'));
+    }
   });
   document.getElementById('detail-overlay').addEventListener('click',e=>{
     if(e.target===e.currentTarget) closeDetail();
