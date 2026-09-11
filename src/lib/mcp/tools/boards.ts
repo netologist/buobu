@@ -71,6 +71,58 @@ export function registerBoardsTools(server: McpServer, ctx: McpContext) {
   );
 
   server.tool(
+    "swimlanes_create",
+    "Create a new swimlane on a board",
+    {
+      boardId: z.string().describe("Board ID"),
+      name: z.string().describe("Swimlane name"),
+      label: z.string().optional().describe("Short label badge"),
+      currency: z.string().optional().default("USD").describe("Currency code (e.g. USD, TRY, EUR)"),
+      color: z.string().optional().default("#6366f1").describe("Hex color code"),
+      description: z.string().optional().default("").describe("Description"),
+      order: z.number().optional().describe("Display order"),
+    },
+    async (input) => {
+      const { requireScope } = await import("../context");
+      requireScope(ctx, "write");
+
+      const { nanoid } = await import("nanoid");
+      const now = new Date().toISOString();
+      const id = nanoid();
+
+      const swimlane = {
+        id,
+        user_id: ctx.userId,
+        boardId: input.boardId,
+        name: input.name,
+        label: input.label ?? null,
+        currency: input.currency ?? "USD",
+        color: input.color ?? "#6366f1",
+        durationHours: null,
+        pomodoroMinutes: 25,
+        breakMinutes: 5,
+        deadline: null,
+        createdAt: now,
+        updatedAt: now,
+        _version: 1,
+        _createdAt: now,
+        _updatedAt: now,
+        _deleted: false,
+        _deviceId: "mcp",
+        _modified: Date.now(),
+        archived: false,
+        archivedAt: null,
+        order: input.order ?? 0,
+        description: input.description ?? "",
+      };
+
+      const { error } = await ctx.supabase.from("swimlanes").insert(swimlane);
+      if (error) return { content: [{ type: "text" as const, text: `Error: ${error.message}` }], isError: true };
+      return { content: [{ type: "text" as const, text: JSON.stringify({ id, status: "created" }) }] };
+    }
+  );
+
+  server.tool(
     "swimlanes_move_to_board",
     "Move a swimlane and all its resources (tasks, habits, routines, notes, bookmarks, mindmaps, vision board items) to a different board. Column IDs of tasks and routines are remapped to the target board's first column (or archive column for archived items).",
     {
