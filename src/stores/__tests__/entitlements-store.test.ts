@@ -176,6 +176,23 @@ describe('refreshEntitlements — network failure', () => {
     expect(useEntitlementsStore.getState().isPlus).toBe(false);
     expect(useEntitlementsStore.getState().isOffline).toBe(true);
   });
+
+  it('does not adopt cached entitlements belonging to a different user (M-03)', async () => {
+    // Current user is user-b
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify({ id: 'user-b' }));
+    // Cache was stored by user-a with isPlus: true
+    localStorage.setItem(
+      STORAGE_KEYS.ENTITLEMENTS,
+      JSON.stringify({ ...PLUS_ROW, userId: 'user-a', isPlus: true, plan: 'plus' }),
+    );
+    mockEntitlementsRow({}, { message: 'Network error' });
+
+    await useEntitlementsStore.getState().refreshEntitlements();
+
+    // Must not inherit user-a's Plus entitlement!
+    expect(useEntitlementsStore.getState().isPlus).toBe(false);
+    expect(useEntitlementsStore.getState().plan).toBe('free');
+  });
 });
 
 // ---------------------------------------------------------------------------

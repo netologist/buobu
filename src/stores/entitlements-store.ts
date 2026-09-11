@@ -21,12 +21,14 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { BILLING_ENABLED } from '@/lib/feature-flags';
+import { getUser } from '@/lib/auth/service';
 
 // -----------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------
 
 export type EntitlementsCache = {
+  userId?: string | null;
   isPlus: boolean;
   hasSyncAccess: boolean;
   plan: 'free' | 'plus';
@@ -51,6 +53,7 @@ interface EntitlementsState extends EntitlementsCache {
 // -----------------------------------------------------------------------
 
 const FREE_DEFAULTS: EntitlementsCache = {
+  userId: null,
   isPlus: false,
   hasSyncAccess: false,
   plan: 'free',
@@ -66,6 +69,7 @@ const FREE_DEFAULTS: EntitlementsCache = {
  * No Supabase fetch is performed — these values are used directly.
  */
 const BILLING_DISABLED_DEFAULTS: EntitlementsCache = {
+  userId: null,
   isPlus: true,
   hasSyncAccess: true,
   plan: 'plus',
@@ -80,21 +84,27 @@ const BILLING_DISABLED_DEFAULTS: EntitlementsCache = {
 // localStorage helpers
 // -----------------------------------------------------------------------
 
-function readCachedEntitlements(): EntitlementsCache | null {
+function readCachedEntitlements(expectedUserId?: string | null): EntitlementsCache | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.ENTITLEMENTS);
     if (!raw) return null;
-    return JSON.parse(raw) as EntitlementsCache;
+    const parsed = JSON.parse(raw) as EntitlementsCache;
+    const currentId = expectedUserId !== undefined ? expectedUserId : getUser()?.id ?? null;
+    if (parsed.userId && currentId && parsed.userId !== currentId) {
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
 }
 
-function writeCachedEntitlements(data: EntitlementsCache): void {
+function writeCachedEntitlements(data: EntitlementsCache, userId?: string | null): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEYS.ENTITLEMENTS, JSON.stringify(data));
+    const currentId = userId !== undefined ? userId : getUser()?.id ?? null;
+    localStorage.setItem(STORAGE_KEYS.ENTITLEMENTS, JSON.stringify({ ...data, userId: currentId }));
   } catch {
     // Storage quota exceeded — not fatal.
   }
@@ -113,7 +123,7 @@ export const useEntitlementsStore = create<EntitlementsState>((set) => {
   // When billing is disabled, skip the cache and immediately grant Plus access.
   // Otherwise, initialise from cache so there's no flash of free-tier UI on reload.
   const initialEntitlements = BILLING_ENABLED
-    ? (readCachedEntitlements() ?? FREE_DEFAULTS)
+    ? (readCachedEntitlements(getUser()?.id ?? null) ?? FREE_DEFAULTS)
     : BILLING_DISABLED_DEFAULTS;
 
   return {
@@ -140,7 +150,9 @@ export const useEntitlementsStore = create<EntitlementsState>((set) => {
 
         if (error) throw error;
 
+        const currentUserId = getUser()?.id ?? null;
         const fresh: EntitlementsCache = {
+          userId: currentUserId,
           isPlus: data.is_plus ?? false,
           hasSyncAccess: data.has_sync_access ?? false,
           plan: (data.plan as 'free' | 'plus') ?? 'free',
@@ -151,11 +163,12 @@ export const useEntitlementsStore = create<EntitlementsState>((set) => {
           cohort: (data.cohort as EntitlementsCache['cohort']) ?? 'standard',
         };
 
-        writeCachedEntitlements(fresh);
+        writeCachedEntitlements(fresh, currentUserId);
         set({ ...fresh, isLoading: false, isOffline: false });
       } catch {
-        // Network failure — fall back to cached values.
-        const cached = readCachedEntitlements();
+        // Network failure — fall back to cached values for THIS user.
+        const currentUserId = getUser()?.id ?? null;
+        const cached = readCachedEntitlements(currentUserId);
         if (cached) {
           set({ ...cached, isLoading: false, isOffline: true });
         } else {
