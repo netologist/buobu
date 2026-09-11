@@ -362,7 +362,7 @@ function filterItems(query: string, editor: Editor) {
 
 function renderItems(editor: Editor) {
   if (!menuEl) return;
-  menuEl.innerHTML = "";
+  menuEl.replaceChildren();
 
   if (currentItems.length === 0) {
     const empty = document.createElement("div");
@@ -377,13 +377,28 @@ function renderItems(editor: Editor) {
     el.className = `slash-item flex items-center gap-3 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${
       idx === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted"
     }`;
-    el.innerHTML = `
-      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background text-sm font-medium">${item.icon}</span>
-      <div class="flex flex-col">
-        <span class="font-medium">${item.title}</span>
-        <span class="text-xs text-muted-foreground">${item.description}</span>
-      </div>
-    `;
+
+    const iconSpan = document.createElement("span");
+    iconSpan.className = "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background text-sm font-medium";
+    iconSpan.textContent = item.icon;
+
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "flex flex-col";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "font-medium";
+    titleSpan.textContent = item.title;
+
+    const descSpan = document.createElement("span");
+    descSpan.className = "text-xs text-muted-foreground";
+    descSpan.textContent = item.description;
+
+    contentDiv.appendChild(titleSpan);
+    contentDiv.appendChild(descSpan);
+
+    el.appendChild(iconSpan);
+    el.appendChild(contentDiv);
+
     el.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
