@@ -17,7 +17,7 @@ if (BILLING_ENABLED && !process.env.STRIPE_SECRET_KEY) {
  */
 export const stripe = BILLING_ENABLED
   ? new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2026-04-22.dahlia',
+      apiVersion: '2026-08-26.dahlia',
       typescript: true,
     })
   : (null as unknown as Stripe);

@@ -35,7 +35,7 @@ The handler at [`src/app/api/stripe/webhook/route.ts`](../../src/app/api/stripe/
 `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
 `customer.subscription.deleted`, `customer.subscription.trial_will_end`, `invoice.paid`, `invoice.payment_failed`.
 
-It is idempotent: processed event IDs are recorded in `stripe_events_processed`, and handler failures in `stripe_events_failed`. Those two tables are created by `20260427000000_subscriptions.sql`. The SDK is pinned to API version `2026-04-22.dahlia` in `src/lib/stripe.ts`; changing it is a deliberate act, not a routine upgrade.
+It is idempotent: processed event IDs are recorded in `stripe_events_processed`, and handler failures in `stripe_events_failed`. Those two tables are created by `20260427000000_subscriptions.sql`. The SDK is pinned to API version `2026-08-26.dahlia` in `src/lib/stripe.ts`; changing it is a deliberate act, not a routine upgrade.
 
 ## 3. Local development
 

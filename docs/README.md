@@ -6,6 +6,7 @@ Design and operating notes for buobu. The [root README](../README.md) is the sho
 
 | Guide | Covers |
 |---|---|
+| [setup-playbook.md](./setup-playbook.md) | **Production Playbook**: Terraform, Supabase, Cloudflare, custom domains, and CI/CD pipelines |
 | [setup/README.md](./setup/README.md) | Prerequisites, commands, how configuration is read |
 | [setup/local-mode.md](./setup/local-mode.md) | The default path: run the app with no backend at all |
 | [setup/supabase.md](./setup/supabase.md) | Cloud Mode: project, migrations, edge function, auth |

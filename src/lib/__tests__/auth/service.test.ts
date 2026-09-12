@@ -48,7 +48,7 @@ function mockRpcResponse<T>(data: T, error: unknown = null): RpcResponse {
     count: null,
     status: 200,
     statusText: 'OK',
-  } as RpcResponse;
+  } as unknown as RpcResponse;
 }
 
 // Helper: seed localStorage with a cached user

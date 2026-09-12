@@ -22,6 +22,7 @@ A copy of `.env.example` sets the flag, so the default developer path lands in L
 
 | Goal | Guide | Needs |
 |---|---|---|
+| Complete cloud & infrastructure playbook | [setup-playbook.md](../setup-playbook.md) | Terraform + Supabase + Cloudflare + CI/CD |
 | Run the app on one machine, alone | [local-mode.md](./local-mode.md) | nothing |
 | Accounts, multi-device sync | [supabase.md](./supabase.md) | Supabase |
 | Let MCP clients reach your data | [workers.md](./workers.md) | Supabase + Cloudflare |

@@ -137,7 +137,7 @@ Because mode is resolved at build time, with public environment values inlined i
 
 Deployed builds are Cloud Mode. A deployed build must never be given `NEXT_PUBLIC_LOCAL_MODE`: a stray `true` there would ship a local-only app, which is the failure this flag exists to prevent.
 
-A deploy needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. If either is missing the build stops with an error naming both remedies, and it never quietly falls back to Local Mode. [`docs/setup/deployment.md`](./docs/setup/deployment.md) covers hosting the static export, the CI that runs on every pull request, and the deploy templates that ship disabled.
+A deploy needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. If either is missing the build stops with an error naming both remedies, and it never quietly falls back to Local Mode. [`docs/setup/deployment.md`](./docs/setup/deployment.md) covers hosting the static export, the CI that runs on every pull request, and the deploy templates that ship disabled. For an end-to-end technical guide to provisioning and deploying the full cloud stack (Terraform, Supabase, Cloudflare, custom domains, and CI/CD pipelines), see the [Infrastructure & Production Setup Playbook](./docs/setup-playbook.md).
 
 ### Keeping a backup in Local Mode
 
@@ -155,7 +155,7 @@ cp .env.example .env.local
 
 Then comment out `NEXT_PUBLIC_LOCAL_MODE` and fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Both are required: with `NEXT_PUBLIC_LOCAL_MODE` off and either value missing, the app stops at startup and names both remedies rather than starting half-configured. Restart the dev server afterwards.
 
-Your Supabase project needs the schema in [`supabase/migrations`](./supabase/migrations) applied and the `fetch-bookmark-metadata` edge function deployed. Billing, invite codes, referrals, MCP and captcha are additional optional features, each behind its own variable. [`docs/setup/supabase.md`](./docs/setup/supabase.md) walks through the project, the migrations and the auth configuration, and [`.env.example`](./.env.example) lists every variable with its default.
+Your Supabase project needs the schema in [`supabase/migrations`](./supabase/migrations) applied and the `fetch-bookmark-metadata` edge function deployed. Billing, invite codes, referrals, MCP and captcha are additional optional features, each behind its own variable. [`docs/setup/supabase.md`](./docs/setup/supabase.md) walks through the project, the migrations and the auth configuration, and [`.env.example`](./.env.example) lists every variable with its default. For complete cloud infrastructure automation and deployment instructions, follow the [Infrastructure & Production Setup Playbook](./docs/setup-playbook.md).
 
 ### Moving data from Local Mode into an account
 
@@ -221,6 +221,7 @@ The end-to-end suite signs in with a real account, so it needs `E2E_TEST_EMAIL` 
 | Where | What |
 |---|---|
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Setup, the checks CI runs, the test and commit conventions, the pull request flow |
+| [`docs/setup-playbook.md`](./docs/setup-playbook.md) | **Production Playbook**: Terraform, Supabase, Cloudflare, custom domains, and CI/CD pipelines |
 | [`docs/setup/`](./docs/setup/) | Local mode, Supabase, the Cloudflare Workers, billing, testing, deployment |
 | [`docs/architecture/`](./docs/architecture/) | System overview, the storage and replication model, data flow, per-module code maps |
 | [`docs/adr/`](./docs/adr/) | Decision records. Start with [ADR-014](./docs/adr/014-local-mode.md) on the two modes |
