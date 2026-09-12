@@ -5,7 +5,7 @@ process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'test-anon-key';
 // Enable billing in tests so billing-related test suites work correctly.
 process.env.NEXT_PUBLIC_BILLING_ENABLED = 'true';
 
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // Polyfill IndexedDB for RxDB/Dexie in jsdom
 import 'fake-indexeddb/auto';
