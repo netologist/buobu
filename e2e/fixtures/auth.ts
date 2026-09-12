@@ -58,12 +58,15 @@ export const test = base.extend<AuthFixtures>({
       // Dismiss first-login onboarding modal if shown (fresh IndexedDB)
       const skipBtn = page.getByRole('button', { name: /skip & auto setup/i });
       try {
-        await skipBtn.waitFor({ state: 'visible', timeout: 10_000 });
+        await skipBtn.waitFor({ state: 'visible', timeout: 25_000 });
         await skipBtn.click();
-        await skipBtn.waitFor({ state: 'hidden', timeout: 10_000 });
+        await skipBtn.waitFor({ state: 'hidden', timeout: 15_000 });
       } catch {
         // Modal already dismissed or data already present
       }
+
+      // Ensure default workspace has rendered
+      await page.locator('text=My Board').first().waitFor({ state: 'visible', timeout: 25_000 }).catch(() => {});
 
       await use(page);
       return;

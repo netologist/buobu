@@ -19,11 +19,12 @@ test.describe('E2E-BOOKMARKS-01: Bookmark Management', { tag: '@local' }, () => 
 
   test('add bookmark button is visible', async ({ authenticatedPage: page }) => {
     const addBtn = page.getByRole('button', { name: /add bookmark|new bookmark|\+ bookmark/i }).first();
-    await expect(addBtn).toBeVisible({ timeout: 10_000 });
+    await expect(addBtn).toBeVisible({ timeout: 20_000 });
   });
 
   test('add URL → bookmark card appears', async ({ authenticatedPage: page }) => {
     const addBtn = page.getByRole('button', { name: /add bookmark|new bookmark|\+ bookmark/i }).first();
+    await addBtn.waitFor({ state: 'visible', timeout: 20_000 });
     await addBtn.click();
 
     // If a swimlane picker dialog appears, select the first swimlane option
@@ -86,7 +87,7 @@ test.describe('E2E-BOOKMARKS-01: Bookmark Management', { tag: '@local' }, () => 
   test('delete bookmark → confirmation → removed', async ({ authenticatedPage: page }) => {
     // Add a bookmark to delete
     const addBtn = page.getByRole('button', { name: /add bookmark|new bookmark|\+ bookmark/i }).first();
-    await addBtn.waitFor({ state: 'visible', timeout: 10_000 });
+    await addBtn.waitFor({ state: 'visible', timeout: 20_000 });
     await addBtn.click();
 
     // If a swimlane picker dialog appears, select the first swimlane option

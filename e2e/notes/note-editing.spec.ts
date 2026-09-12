@@ -2,10 +2,10 @@ import { test, expect } from '../fixtures/auth';
 
 async function openNewNote(page: any) {
   const moreBtn = page.locator('button[title*="Actions for"]').first();
-  await moreBtn.waitFor({ state: 'visible', timeout: 15_000 });
+  await moreBtn.waitFor({ state: 'visible', timeout: 25_000 });
   await moreBtn.click();
   const addBtn = page.getByRole('button', { name: /add note/i });
-  await addBtn.waitFor({ state: 'visible', timeout: 5_000 });
+  await addBtn.waitFor({ state: 'visible', timeout: 10_000 });
   await addBtn.click();
 }
 

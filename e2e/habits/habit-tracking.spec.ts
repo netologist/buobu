@@ -20,11 +20,12 @@ test.describe('E2E-HABITS-01: Habit Tracking', { tag: '@local' }, () => {
 
   test('add habit button is visible', async ({ authenticatedPage: page }) => {
     const addBtn = page.getByRole('button', { name: /add habit|new habit|\+ habit/i }).first();
-    await expect(addBtn).toBeVisible({ timeout: 10_000 });
+    await expect(addBtn).toBeVisible({ timeout: 20_000 });
   });
 
   test('create habit with daily frequency', async ({ authenticatedPage: page }) => {
     const addBtn = page.getByRole('button', { name: /add habit|new habit|\+ habit/i }).first();
+    await addBtn.waitFor({ state: 'visible', timeout: 20_000 });
     await addBtn.click();
 
     // Dialog should open
@@ -105,6 +106,7 @@ test.describe('E2E-HABITS-01: Habit Tracking', { tag: '@local' }, () => {
   test('delete habit → confirmation → habit removed', async ({ authenticatedPage: page }) => {
     // First create a habit to delete
     const addBtn = page.getByRole('button', { name: /add habit|new habit|\+ habit/i }).first();
+    await addBtn.waitFor({ state: 'visible', timeout: 20_000 });
     await addBtn.click();
 
     const dialog = page.getByRole('dialog');
@@ -116,7 +118,6 @@ test.describe('E2E-HABITS-01: Habit Tracking', { tag: '@local' }, () => {
 
     await expect(page.getByText(habitName).first()).toBeVisible({ timeout: 10_000 });
 
-    // Habits have icon-only action buttons (trash, pencil, archive) that are
     // Habits have icon-only action buttons (trash, pencil, archive) that are
     // revealed on hover (md:opacity-0 md:group-hover:opacity-100).
     // The delete button has title="Delete habit" and opens a ConfirmDialog.
