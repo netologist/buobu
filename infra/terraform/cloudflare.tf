@@ -3,7 +3,9 @@
 # Cloudflare Dashboard → Add a domain
 # ============================================================================
 data "cloudflare_zone" "app" {
-  name = var.root_domain
+  filter = {
+    name = var.root_domain
+  }
 }
 
 # ============================================================================
@@ -27,7 +29,7 @@ resource "cloudflare_pages_project" "app" {
 # ============================================================================
 
 # Apex: the root domain serves the Pages project.
-resource "cloudflare_record" "apex" {
+resource "cloudflare_dns_record" "apex" {
   zone_id = data.cloudflare_zone.app.id
   name    = var.root_domain
   type    = "CNAME"
@@ -39,11 +41,11 @@ resource "cloudflare_record" "apex" {
 resource "cloudflare_pages_domain" "apex" {
   account_id   = var.cloudflare_account_id
   project_name = cloudflare_pages_project.app.name
-  domain       = var.root_domain
+  name         = var.root_domain
 }
 
 # www: the same project under the www host.
-resource "cloudflare_record" "www" {
+resource "cloudflare_dns_record" "www" {
   zone_id = data.cloudflare_zone.app.id
   name    = "www"
   type    = "CNAME"
@@ -55,7 +57,7 @@ resource "cloudflare_record" "www" {
 resource "cloudflare_pages_domain" "www" {
   account_id   = var.cloudflare_account_id
   project_name = cloudflare_pages_project.app.name
-  domain       = "www.${var.root_domain}"
+  name         = "www.${var.root_domain}"
 }
 
 # ============================================================================
