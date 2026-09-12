@@ -12,7 +12,12 @@ const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD ?? 'testpassword123';
  * NOTE: This test requires a running Supabase instance with Realtime enabled
  * and a valid test account. It may be skipped in CI if E2E_TEST_EMAIL is not set.
  */
-test.describe('E2E-SYNC-01: Cross-Tab Sync', () => {
+test.describe('E2E-SYNC-01: Cross-Tab Sync', { tag: '@cloud' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE === 'true',
+    'Cloud-only test — skipped in Local Mode',
+  );
+
   test('create task in tab 1 → appears in tab 2 (Supabase Realtime)', async () => {
     if (!process.env.E2E_TEST_EMAIL) {
       test.skip(true, 'E2E_TEST_EMAIL not set — skipping cross-tab sync test');

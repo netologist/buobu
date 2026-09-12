@@ -1,8 +1,11 @@
 import { test, expect } from '../fixtures/auth';
 
-test.describe('E2E-BOOKMARKS-01: Bookmark Management', () => {
-  test.skip(!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local');
+test.describe('E2E-BOOKMARKS-01: Bookmark Management', { tag: '@local' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE !== 'true' &&
+      (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD),
+    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local',
+  );
 
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/bookmarks');
@@ -83,6 +86,7 @@ test.describe('E2E-BOOKMARKS-01: Bookmark Management', () => {
   test('delete bookmark → confirmation → removed', async ({ authenticatedPage: page }) => {
     // Add a bookmark to delete
     const addBtn = page.getByRole('button', { name: /add bookmark|new bookmark|\+ bookmark/i }).first();
+    await addBtn.waitFor({ state: 'visible', timeout: 10_000 });
     await addBtn.click();
 
     // If a swimlane picker dialog appears, select the first swimlane option
@@ -106,20 +110,12 @@ test.describe('E2E-BOOKMARKS-01: Bookmark Management', () => {
     });
 
     // Click the trash icon in the right panel header to delete the currently selected bookmark
-    const deleteBtn = page.getByRole('button', { name: /delete|remove/i }).first();
-    const hasDelete = await deleteBtn.isVisible({ timeout: 3_000 }).catch(() => false);
+    const deleteBtn = page.getByRole('button', { name: /delete bookmark/i }).first();
+    await expect(deleteBtn).toBeVisible({ timeout: 5_000 });
+    await deleteBtn.click();
 
-    if (hasDelete) {
-      await deleteBtn.click();
-
-      const confirmBtn = page.getByRole('button', { name: /confirm|yes|delete/i }).last();
-      if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-        await confirmBtn.click();
-      }
-
-      await expect(page.getByText('playwright.dev').or(page.getByText('Playwright')).first()).not.toBeVisible({
-        timeout: 10_000,
-      });
-    }
+    await expect(page.getByText('playwright.dev').or(page.getByText('Playwright')).first()).not.toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

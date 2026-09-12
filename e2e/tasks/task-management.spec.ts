@@ -1,8 +1,11 @@
 import { test, expect } from '../fixtures/auth';
 
-test.describe('E2E-TASKS-01: Core Task Management', () => {
-  test.skip(!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local');
+test.describe('E2E-TASKS-01: Core Task Management', { tag: '@local' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE !== 'true' &&
+      (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD),
+    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local',
+  );
 
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/tasks/kanban-view');
@@ -12,7 +15,7 @@ test.describe('E2E-TASKS-01: Core Task Management', () => {
   test('kanban board renders columns', async ({ authenticatedPage: page }) => {
     // Kanban board renders a sticky header row with column titles.
     // Both the middle-panel swimlane header and the right-panel column header use min-h-14.
-    await expect(page).toHaveURL(/\/tasks\/kanbanView/);
+    await expect(page).toHaveURL(/\/tasks\/kanban/);
     await expect(page.locator('body')).not.toContainText(/error|crashed/i);
     await expect(page.locator('.min-h-14').first()).toBeVisible({ timeout: 10_000 });
   });
@@ -65,7 +68,7 @@ test.describe('E2E-TASKS-01: Core Task Management', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Page should load without error
-    await expect(page).toHaveURL('/tasks/list-view');
+    await expect(page).toHaveURL(/\/tasks\/list-view/);
     await expect(page.locator('body')).not.toContainText(/error|crashed/i);
   });
 

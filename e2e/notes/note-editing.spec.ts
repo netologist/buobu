@@ -1,8 +1,20 @@
 import { test, expect } from '../fixtures/auth';
 
-test.describe('E2E-NOTES-01: Note Taking', () => {
-  test.skip(!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local');
+async function openNewNote(page: any) {
+  const moreBtn = page.locator('button[title*="Actions for"]').first();
+  await moreBtn.waitFor({ state: 'visible', timeout: 15_000 });
+  await moreBtn.click();
+  const addBtn = page.getByRole('button', { name: /add note/i });
+  await addBtn.waitFor({ state: 'visible', timeout: 5_000 });
+  await addBtn.click();
+}
+
+test.describe('E2E-NOTES-01: Note Taking', { tag: '@local' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE !== 'true' &&
+      (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD),
+    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local',
+  );
 
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/notes');
@@ -15,9 +27,7 @@ test.describe('E2E-NOTES-01: Note Taking', () => {
   });
 
   test('create note → editor opens', async ({ authenticatedPage: page }) => {
-    const addBtn = page.getByRole('button', { name: /add note|new note|\+ note/i }).first();
-    await expect(addBtn).toBeVisible({ timeout: 10_000 });
-    await addBtn.click();
+    await openNewNote(page);
 
     // Either a dialog or an inline editor should appear
     const editor = page.locator(
@@ -27,8 +37,7 @@ test.describe('E2E-NOTES-01: Note Taking', () => {
   });
 
   test('type content → content is visible', async ({ authenticatedPage: page }) => {
-    const addBtn = page.getByRole('button', { name: /add note|new note|\+ note/i }).first();
-    await addBtn.click();
+    await openNewNote(page);
 
     const editor = page
       .locator('[contenteditable="true"]')
@@ -61,52 +70,50 @@ test.describe('E2E-NOTES-01: Note Taking', () => {
   });
 
   test('rich text formatting — bold shortcut', async ({ authenticatedPage: page }) => {
-    const addBtn = page.getByRole('button', { name: /add note|new note|\+ note/i }).first();
-    await addBtn.click();
+    await openNewNote(page);
 
     const editor = page.locator('[contenteditable="true"]').first();
     await expect(editor).toBeVisible({ timeout: 10_000 });
     await editor.click();
 
     await editor.type('Bold text');
-    await page.keyboard.press('Control+a');
-    await page.keyboard.press('Control+b');
+    const isMac = process.platform === 'darwin';
+    await page.keyboard.press(isMac ? 'Meta+a' : 'Control+a');
+    await page.keyboard.press(isMac ? 'Meta+b' : 'Control+b');
 
     // Check that bold markup was applied
     const boldEl = editor.locator('strong, b');
-    await expect(boldEl).toBeVisible({ timeout: 3_000 });
+    await expect(boldEl).toBeVisible({ timeout: 5_000 });
   });
 
   test('delete note → confirmation → removed from list', async ({ authenticatedPage: page }) => {
     // Create a note first
-    const addBtn = page.getByRole('button', { name: /add note|new note|\+ note/i }).first();
-    await addBtn.click();
+    await openNewNote(page);
+
+    const titleInput = page.getByPlaceholder('Note title...');
+    await expect(titleInput).toBeVisible({ timeout: 10_000 });
+
+    const noteTitle = `E2E Delete Note ${Date.now()}`;
+    await titleInput.fill(noteTitle);
 
     const editor = page.locator('[contenteditable="true"]').first();
-    await expect(editor).toBeVisible({ timeout: 10_000 });
-
-    const noteText = `E2E Delete Note ${Date.now()}`;
     await editor.click();
-    await editor.type(noteText);
+    await editor.type('Note body to delete');
 
-    // Close editor / go back to grid
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    // Click save in NoteEditor header
+    const saveBtn = page.getByTitle('Save');
+    await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
+    await saveBtn.click();
 
-    // Find delete for this note
-    const noteEntry = page.getByText(noteText).locator('..').locator('..');
-    const deleteBtn = noteEntry.getByRole('button', { name: /delete|remove/i }).first();
+    // Now that note is saved, Delete button appears in the NoteEditor header
+    const deleteBtn = page.getByTitle('Delete');
+    await expect(deleteBtn).toBeVisible({ timeout: 10_000 });
 
-    if (await deleteBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await deleteBtn.click();
+    // NoteEditor uses window.confirm("Delete this note?")
+    page.once('dialog', (dlg) => dlg.accept());
+    await deleteBtn.click();
 
-      const confirmBtn = page.getByRole('button', { name: /confirm|yes|delete/i }).last();
-      if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-        await confirmBtn.click();
-      }
-
-      await expect(page.getByText(noteText)).not.toBeVisible({ timeout: 10_000 });
-    }
+    await expect(page.getByText(noteTitle)).not.toBeVisible({ timeout: 10_000 });
   });
 
   test('page reload → note content persists', async ({ authenticatedPage: page }) => {

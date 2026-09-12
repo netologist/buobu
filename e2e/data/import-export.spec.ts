@@ -3,9 +3,12 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
-test.describe('E2E-DATA-01: Import / Export', () => {
-  test.skip(!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local');
+test.describe('E2E-DATA-01: Import / Export', { tag: '@local' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE !== 'true' &&
+      (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD),
+    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local',
+  );
 
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/tasks/kanban-view');

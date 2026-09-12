@@ -170,6 +170,7 @@ export function useFirstLoginOnboarding() {
 
     try {
       await seedFromPreset(presetId, db, user.id);
+      await useBoardStore.getState().loadBoards();
       const hasData = await hasAnyCoreData(db);
       setStep(hasData ? 'done' : 'fallback-options');
     } catch (err) {
@@ -186,6 +187,7 @@ export function useFirstLoginOnboarding() {
 
     try {
       await seedDefaultWorkspace(db, user.id);
+      await useBoardStore.getState().loadBoards();
       const hasData = await hasAnyCoreData(db);
       setStep(hasData ? 'done' : 'fallback-options');
     } catch (err) {

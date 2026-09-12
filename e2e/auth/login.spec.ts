@@ -3,7 +3,12 @@ import { test, expect } from '@playwright/test';
 const TEST_EMAIL = process.env.E2E_TEST_EMAIL;
 const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD;
 
-test.describe('E2E-AUTH-02: Login / Logout Flow', () => {
+test.describe('E2E-AUTH-02: Login / Logout Flow', { tag: '@cloud' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE === 'true',
+    'Cloud-only test — skipped in Local Mode',
+  );
+
   test('valid credentials → login succeeds, redirected to board', async ({ page }) => {
     if (!TEST_EMAIL || !TEST_PASSWORD) {
       test.skip(true, 'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set');

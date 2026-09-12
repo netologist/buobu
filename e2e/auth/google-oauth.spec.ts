@@ -12,7 +12,12 @@ import { test, expect } from "@playwright/test";
  *
  * For full manual verification steps see docs/testing/e2e-manual-checklist.md.
  */
-test.describe("E2E-AUTH-03: Google OAuth Flow", () => {
+test.describe("E2E-AUTH-03: Google OAuth Flow", { tag: "@cloud" }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE === "true",
+    "Cloud-only test — skipped in Local Mode",
+  );
+
   test('login page renders "Continue with Google" button', async ({ page }) => {
     await page.goto("/auth/login");
     const googleBtn = page.getByRole("button", {

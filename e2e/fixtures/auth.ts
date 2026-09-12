@@ -39,6 +39,36 @@ async function loginViaUI(page: Page, email: string, password: string) {
 
 export const test = base.extend<AuthFixtures>({
   authenticatedPage: async ({ page }, use, testInfo) => {
+    // Suppress the Daily Briefing reminder before any page script runs.
+    // The component reads 'buobu.last-briefing-date' from localStorage and skips
+    // the floating overlay when the stored date matches today.
+    await page.addInitScript(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('buobu.last-briefing-date', today);
+    });
+
+    const isLocalMode = process.env.NEXT_PUBLIC_LOCAL_MODE === 'true';
+
+    if (isLocalMode) {
+      // In Local Mode, no Supabase auth or login screen is needed.
+      // The app runs as the synthetic Local User automatically.
+      await page.goto('/tasks/kanban-view');
+      await page.waitForLoadState('domcontentloaded');
+
+      // Dismiss first-login onboarding modal if shown (fresh IndexedDB)
+      const skipBtn = page.getByRole('button', { name: /skip & auto setup/i });
+      try {
+        await skipBtn.waitFor({ state: 'visible', timeout: 10_000 });
+        await skipBtn.click();
+        await skipBtn.waitFor({ state: 'hidden', timeout: 10_000 });
+      } catch {
+        // Modal already dismissed or data already present
+      }
+
+      await use(page);
+      return;
+    }
+
     const email = process.env.E2E_TEST_EMAIL;
     const password = process.env.E2E_TEST_PASSWORD;
 

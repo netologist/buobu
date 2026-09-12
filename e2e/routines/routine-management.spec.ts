@@ -1,8 +1,11 @@
 import { test, expect } from '../fixtures/auth';
 
-test.describe('E2E-ROUTINES-01: Daily Routines', () => {
-  test.skip(!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local');
+test.describe('E2E-ROUTINES-01: Daily Routines', { tag: '@local' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE !== 'true' &&
+      (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD),
+    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local',
+  );
 
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/routines');
@@ -16,7 +19,7 @@ test.describe('E2E-ROUTINES-01: Daily Routines', () => {
 
   test('add routine button is visible', async ({ authenticatedPage: page }) => {
     const addBtn = page.getByRole('button', { name: /add routine|new routine|\+ routine/i }).first();
-    await expect(addBtn).toBeVisible({ timeout: 10_000 });
+    await expect(addBtn).toBeVisible({ timeout: 20_000 });
   });
 
   test('create routine with tasks', async ({ authenticatedPage: page }) => {
@@ -71,6 +74,7 @@ test.describe('E2E-ROUTINES-01: Daily Routines', () => {
   test('delete routine → confirmation → removed', async ({ authenticatedPage: page }) => {
     // Create a routine to delete
     const addBtn = page.getByRole('button', { name: /add routine|new routine|\+ routine/i }).first();
+    await addBtn.waitFor({ state: 'visible', timeout: 15_000 });
     await addBtn.click();
 
     const dialog = page.getByRole('dialog');
@@ -85,17 +89,14 @@ test.describe('E2E-ROUTINES-01: Daily Routines', () => {
     // The detail view header has a trash icon button with title="Delete".
     await page.getByText(routineName).first().click();
     const detailDeleteBtn = page.getByTitle('Delete').first();
+    await expect(detailDeleteBtn).toBeVisible({ timeout: 10_000 });
+    await detailDeleteBtn.click();
 
-    if (await detailDeleteBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await detailDeleteBtn.click();
+    // RoutineDetailView opens a confirmation Dialog with a "Delete" button
+    const confirmDialog = page.getByRole('dialog');
+    await expect(confirmDialog).toBeVisible({ timeout: 5_000 });
+    await confirmDialog.getByRole('button', { name: /^delete$/i }).click();
 
-      // RoutineDetailView opens a shadcn confirmation Dialog with a "Delete" button
-      const confirmBtn = page.getByRole('button', { name: /^delete$/i }).last();
-      if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-        await confirmBtn.click();
-      }
-
-      await expect(page.getByText(routineName)).not.toBeVisible({ timeout: 10_000 });
-    }
+    await expect(page.getByText(routineName)).not.toBeVisible({ timeout: 10_000 });
   });
 });

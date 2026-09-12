@@ -128,10 +128,14 @@ export function useBoards() {
   // Exception: if showArchivedItems is ON, include them so board components can filter them.
   const filteredSwimlanes = useMemo(() => {
     const swList = swimlanes.filter((s): s is typeof s & { boardId: string } => !!s.boardId);
-    const result = filterSwimlanes(swList, selections);
+    const effectiveSelections =
+      selections.length === 0 && board
+        ? [`${board.id}:*`]
+        : selections;
+    const result = filterSwimlanes(swList, effectiveSelections);
 
     if (!board?.archived) {
-      const hasExplicitSwimlaneIds = selections.some((s) => {
+      const hasExplicitSwimlaneIds = effectiveSelections.some((s) => {
         const colonIdx = s.indexOf(':');
         return colonIdx !== -1 && s.slice(colonIdx + 1) !== '*';
       });

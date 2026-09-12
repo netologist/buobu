@@ -1,8 +1,11 @@
 import { test, expect } from '../fixtures/auth';
 
-test.describe('E2E-HABITS-01: Habit Tracking', () => {
-  test.skip(!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local');
+test.describe('E2E-HABITS-01: Habit Tracking', { tag: '@local' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE !== 'true' &&
+      (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD),
+    'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set — add to .env.local',
+  );
 
   test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/habits');
@@ -36,7 +39,7 @@ test.describe('E2E-HABITS-01: Habit Tracking', () => {
     await dialog.getByRole('button', { name: /create|save|add/i }).last().click();
 
     // Habit should appear in the grid
-    await expect(page.getByText(habitName)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(habitName).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('log habit for today → cell state updates', async ({ authenticatedPage: page }) => {
@@ -111,22 +114,25 @@ test.describe('E2E-HABITS-01: Habit Tracking', () => {
     await dialog.getByRole('textbox').first().fill(habitName);
     await dialog.getByRole('button', { name: /create|save|add/i }).last().click();
 
-    await expect(page.getByText(habitName)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(habitName).first()).toBeVisible({ timeout: 10_000 });
 
     // Habits have icon-only action buttons (trash, pencil, archive) that are
+    // Habits have icon-only action buttons (trash, pencil, archive) that are
     // revealed on hover (md:opacity-0 md:group-hover:opacity-100).
-    // The delete button has title="Delete habit". handleDeleteHabit calls
-    // window.confirm(), so we must accept the dialog before clicking.
+    // The delete button has title="Delete habit" and opens a ConfirmDialog.
     const habitRow = page.locator('[data-habit-id]').filter({ hasText: habitName });
     await habitRow.hover();
 
     const deleteBtn = habitRow.getByTitle('Delete habit');
-    const hasDelete = await deleteBtn.isVisible({ timeout: 3_000 }).catch(() => false);
+    const hasDelete = await deleteBtn.isVisible({ timeout: 5_000 }).catch(() => false);
 
     if (hasDelete) {
-      // Accept the window.confirm() that handleDeleteHabit fires
-      page.once('dialog', (dlg) => dlg.accept());
       await deleteBtn.click();
+
+      // ConfirmDialog appears with a "Delete" button
+      const confirmDialog = page.getByRole('dialog');
+      await expect(confirmDialog).toBeVisible({ timeout: 5_000 });
+      await confirmDialog.getByRole('button', { name: /^delete$/i }).click();
 
       await expect(habitRow).not.toBeVisible({ timeout: 10_000 });
     }

@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('E2E-AUTH-01: Registration Flow', () => {
+test.describe('E2E-AUTH-01: Registration Flow', { tag: '@cloud' }, () => {
+  test.skip(
+    process.env.NEXT_PUBLIC_LOCAL_MODE === 'true',
+    'Cloud-only test — skipped in Local Mode',
+  );
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/register');
   });
