@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Swimlane } from "@/lib/types";
-import { ReorderModal } from "@/components/ui/ReorderModal";
+import { ReorderModal } from "@/components/ui/reorder-modal";
 import { useBoardStore } from "@/stores/board-store";
 import { useSwimlaneSelectionDerived } from "@/stores/swimlane-selection-store";
 
@@ -80,15 +80,7 @@ export function ReorderSwimlanesModal({
     [allSwimlanes, boardId],
   );
 
-  const [orderedSwimlanes, setOrderedSwimlanes] = useState<Swimlane[]>([]);
-
-  useEffect(() => {
-    if (!open) return;
-    setOrderedSwimlanes(boardSwimlanes);
-  }, [open, boardSwimlanes]);
-
   async function handleSave(items: Swimlane[]) {
-    setOrderedSwimlanes(items);
     await reorderSwimlanes(items.map((s) => s.id));
   }
 
@@ -97,7 +89,7 @@ export function ReorderSwimlanesModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Reorder Swimlanes"
-      items={orderedSwimlanes}
+      items={boardSwimlanes}
       getItemId={(item) => item.id}
       renderItem={(item) => <SortableSwimlaneRow key={item.id} swimlane={item} />}
       onSave={handleSave}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,13 +38,15 @@ export function PromptDialog({
   onCancel,
   onOpenChange,
 }: PromptDialogProps) {
+  const [prevOpen, setPrevOpen] = useState(open);
   const [value, setValue] = useState(defaultValue ?? "");
 
-  useEffect(() => {
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setValue(defaultValue ?? "");
     }
-  }, [open, defaultValue]);
+  }
 
   return (
     <Dialog

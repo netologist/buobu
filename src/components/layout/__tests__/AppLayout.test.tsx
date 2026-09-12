@@ -64,13 +64,10 @@ vi.mock("@/components/ui/swimlane-dialog", () => ({
 	SwimlaneDialog: () => null,
 }));
 
-vi.mock("@/components/ui/BoardModal", () => ({
+vi.mock("@/components/ui/board-modal", () => ({
 	BoardModal: () => null,
 }));
 
-vi.mock("@/components/ui/board-switcher", () => ({
-	BoardSwitcher: () => null,
-}));
 
 vi.mock("@/components/layout/CompactNavigation", () => ({
 	CompactNavigation: () => null,
@@ -88,6 +85,7 @@ vi.mock("@/contexts/NamingContext", () => ({
 import { AppLayout } from "../AppLayout";
 import { makeBoard, makeSwimlane } from "@/test/factories";
 import type { SidebarConfig } from "../AppLayout";
+import { useEntitlementsStore } from "@/stores/entitlements-store";
 
 function makeSidebarConfig(overrides?: Partial<SidebarConfig>): SidebarConfig {
 	return {
@@ -101,6 +99,7 @@ describe("AppLayout — rendering", () => {
 	beforeEach(() => {
 		selectionDerived.primaryBoardId = null;
 		archiveViewState.target = null;
+		useEntitlementsStore.setState({ trialEnd: null });
 	});
 
 	it("renders middle panel content", () => {
@@ -227,3 +226,20 @@ describe("AppLayout — archive mode", () => {
 		expect(screen.queryByText(/exit archive/i)).toBeNull();
 	});
 });
+
+describe("AppLayout — trial expiry banner", () => {
+	it("renders trial expiry warning when trial is expiring within 2 days", () => {
+		const oneDayFromNow = new Date(Date.now() + 86_400_000).toISOString();
+		useEntitlementsStore.setState({ trialEnd: oneDayFromNow });
+		render(
+			<AppLayout
+				sidebarConfig={makeSidebarConfig()}
+				middlePanel={<div />}
+				rightPanel={<div />}
+			/>,
+		);
+		expect(screen.getByRole("alert")).toBeInTheDocument();
+		expect(screen.getByText(/Your trial ends/i)).toBeInTheDocument();
+	});
+});
+

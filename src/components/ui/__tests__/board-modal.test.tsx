@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getAllBoards, getBoardById } from '@/lib/db';
 import { makeBoard } from '@/test/factories';
-import { BoardModal } from '../BoardModal';
+import { BoardModal } from '../board-modal';
 
 const { putBoardMock, deleteBoardMock, archiveBoardMock, putSwimlaneMock } = vi.hoisted(() => ({
   putBoardMock: vi.fn().mockResolvedValue(undefined),

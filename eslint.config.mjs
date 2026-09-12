@@ -30,6 +30,10 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated worker bundle artifacts.
     "**/.wrangler/**",
+    // Test coverage and report artifacts.
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

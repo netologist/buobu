@@ -50,7 +50,7 @@ import { useSyncStore } from "@/stores/sync-store";
 import { useSwimlaneSelectionDerived } from "@/stores/swimlane-selection-store";
 import { getSwimlaneById } from "@/lib/db";
 import { useBoardStore } from "@/stores/board-store";
-import { BoardModal } from "@/components/ui/BoardModal";
+import { BoardModal } from "@/components/ui/board-modal";
 import { SwimlaneDialog } from "@/components/ui/swimlane-dialog";
 import type { Swimlane } from "@/lib/types";
 import { getSyncSummary } from "@/lib/formatters/syncFormatter";

@@ -234,4 +234,4 @@ The end-to-end suite signs in with a real account, so it needs `E2E_TEST_EMAIL` 
 
 [AGPL-3.0](./LICENSE). You are free to run, modify and share this software. If you run a modified version as a network service, you must offer its source to the people using it.
 
-Commercial use is permitted under the AGPL. If those terms do not work for you — embedding the code in a closed product, for instance — a commercial license is available: <hasan@ozgan.net>. The **Buobu** name and logo are not licensed for commercial use.
+Commercial use is permitted under the AGPL. The **Buobu** name and logo are not licensed for commercial use.

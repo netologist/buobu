@@ -92,7 +92,7 @@ export function BookmarksBoard() {
       setSelectedBookmark(target);
       setMetadataState("idle");
     }
-  }, [selectedBookmarkIdParam]);
+  }, [allBookmarks, selectedBookmarkIdParam, subscribedBookmarks]);
 
   useEffect(() => {
     if (prevSelectionsKey.current === selectionsKey) return;
@@ -239,7 +239,7 @@ export function BookmarksBoard() {
         if (newest) setSelectedBookmark(newest);
       }
     },
-    [boards, selectedBookmark?.swimlaneId, swimlanes]
+    [allBookmarks, boards, guard, selectedBookmark?.swimlaneId, swimlanes]
   );
 
   const hydrateMetadata = useCallback(async () => {

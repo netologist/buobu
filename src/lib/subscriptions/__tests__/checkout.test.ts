@@ -38,6 +38,7 @@ function mockCheckoutSuccess(url = 'https://checkout.stripe.com/session/abc') {
 function mockCheckoutError(status = 400, error = 'Invalid price ID') {
   mockFetch.mockResolvedValueOnce({
     ok: false,
+    status,
     json: async () => ({ error }),
   });
 }

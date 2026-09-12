@@ -109,7 +109,7 @@ export function VisionBoard() {
       setSelectedItem(target);
       setIsCreatingNew(false);
     }
-  }, [selectedItemIdParam]);
+  }, [allItems, selectedItemIdParam, subscribedItems]);
 
   // Sync selected item to URL query param (?whiteboardId=...).
   const hasUrlSyncHydrated = useRef(false);
@@ -198,7 +198,7 @@ export function VisionBoard() {
         setIsCreatingNew(false);
       }
     },
-    [boards, swimlanes, selectedItem?.swimlaneId]
+    [allItems, boards, guard, selectedItem?.swimlaneId, swimlanes]
   );
 
   const handleDeleteItem = useCallback(

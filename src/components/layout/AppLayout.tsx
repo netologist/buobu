@@ -18,7 +18,8 @@ import { AppLayoutMobileToggleButton } from "@/components/layout/AppLayoutMobile
 import { AppLayoutSheet } from "@/components/layout/AppLayoutSheet";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AppsBar } from "@/components/layout/AppsBar";
-import { BoardModal } from "@/components/ui/BoardModal";
+import { TrialExpiryBanner } from "@/components/subscriptions/TrialExpiryBanner";
+import { BoardModal } from "@/components/ui/board-modal";
 import { SwimlaneDialog } from "@/components/ui/swimlane-dialog";
 import { NamingProvider } from "@/contexts/NamingContext";
 import { DEFAULT_NAMING } from "@/lib/naming";
@@ -27,6 +28,7 @@ import type { Board, Swimlane } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useArchiveViewStore } from "@/stores/archive-view-store";
 import { useBoardStore } from "@/stores/board-store";
+import { useEntitlementsStore } from "@/stores/entitlements-store";
 import {
 	useSwimlaneSelectionDerived,
 	useSwimlaneSelectionStore,
@@ -112,6 +114,7 @@ export function AppLayout({
 	);
 	const isSearchContext = isSearchContextActive(searchParamsState);
 	const searchContextLabel = buildSearchContextLabel(searchParamsState);
+	const trialEnd = useEntitlementsStore((s) => s.trialEnd);
 
 	const { primaryBoardId, isAllSelected } = useSwimlaneSelectionDerived();
 	const { selectBoard } = useSwimlaneSelectionStore();
@@ -329,6 +332,8 @@ export function AppLayout({
 						onResetSearchContext={clearSearchContext}
 					/>
 				)}
+
+				<TrialExpiryBanner trialEnd={trialEnd} className="m-2 shrink-0" />
 
 				<div className="flex flex-1 overflow-hidden">
 					<div className="flex flex-1 overflow-hidden">

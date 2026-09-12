@@ -46,7 +46,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { SwimlaneDialog } from "@/components/ui/swimlane-dialog";
-import { ColumnsTabContent } from "@/components/ui/BoardModalColumnsTab";
+import { ColumnsTabContent } from "@/components/ui/board-modal-columns-tab";
 import {
 	getAllBoards,
 	getBoardById,

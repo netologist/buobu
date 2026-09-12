@@ -83,18 +83,25 @@ export function TimeblocksBoard() {
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStartDate(new Date(), 1));
   const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"week" | "day">("week");
-
-  // Default to day view on mobile once hydrated
-  useEffect(() => {
-    if (isMobile) setViewMode("day");
-  }, [isMobile]);
+  const [userViewMode, setUserViewMode] = useState<"week" | "day" | null>(null);
+  const viewMode = userViewMode ?? (isMobile ? "day" : "week");
+  const setViewMode = (mode: "week" | "day") => setUserViewMode(mode);
 
   const displayWeekStart = useMemo(
     () => getWeekStartDate(weekStart, effectiveWeekStartDay),
     [weekStart, effectiveWeekStartDay],
   );
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => selectedTimeblockIdParam ?? null);
+  const [prevParam, setPrevParam] = useState(selectedTimeblockIdParam);
+  if (selectedTimeblockIdParam !== prevParam) {
+    setPrevParam(selectedTimeblockIdParam);
+    if (selectedTimeblockIdParam) {
+      const target = allTimeblocks.find((tb) => tb.id === selectedTimeblockIdParam);
+      if (target) {
+        setSelectedId(target.id);
+      }
+    }
+  }
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTimeblock, setEditingTimeblock] = useState<Timeblock | null>(null);
   const [defaultBoardId, setDefaultBoardId] = useState<string | null>(null);
@@ -111,14 +118,6 @@ export function TimeblocksBoard() {
       toggleSwimlane(selectedBoardIdParam, selectedSwimlaneIdParam);
     }
   }, [selectedBoardIdParam, selectedSwimlaneIdParam, toggleSwimlane]);
-
-  useEffect(() => {
-    if (!selectedTimeblockIdParam) return;
-    const target = allTimeblocks.find((tb) => tb.id === selectedTimeblockIdParam);
-    if (target) {
-      setSelectedId(target.id);
-    }
-  }, [allTimeblocks, selectedTimeblockIdParam]);
 
   const prevWeek = () =>
     setWeekStart((prev: Date) => {

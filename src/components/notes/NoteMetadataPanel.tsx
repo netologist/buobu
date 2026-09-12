@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Copy, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { Note, NoteMetadataField, NoteMetadataType } from "@/lib/types";
 
@@ -155,8 +153,11 @@ function MetadataFieldsSection({
 }) {
   const [draft, setDraft] = useState<NoteMetadataField[]>(fields);
   const draftRef = useRef(draft);
-  draftRef.current = draft;
   const keyInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   useEffect(() => {
     setDraft(fields);
@@ -360,13 +361,17 @@ function MetadataListValue({
   const [draft, setDraft] = useState<string[]>(() =>
     parseListValue(field.value),
   );
+  const [prevFieldValue, setPrevFieldValue] = useState(field.value);
+  if (field.value !== prevFieldValue) {
+    setPrevFieldValue(field.value);
+    setDraft(parseListValue(field.value));
+  }
   const draftRef = useRef(draft);
-  draftRef.current = draft;
   const listInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setDraft(parseListValue(field.value));
-  }, [field.value, parseListValue]);
+    draftRef.current = draft;
+  }, [draft]);
 
   const commitList = useCallback(
     (next: string[]) => {

@@ -27,7 +27,7 @@ import EditorToolbar from "./EditorToolbar";
 import CodeBlockView from "./extensions/code-block-view";
 import { TableOfContents } from "./extensions/table-of-contents";
 import NotePreviewDrawer from "./NotePreviewDrawer";
-import { PromptDialog } from "@/components/ui/PromptDialog";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import type { Note } from "@/lib/types";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 

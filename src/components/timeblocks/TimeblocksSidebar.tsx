@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useArchivedTimeblocks, timeblockActions } from "@/stores/hooks/use-timeblocks";
+import { timeblockActions } from "@/stores/hooks/use-timeblocks";
 import { useActiveHabits } from "@/stores/hooks/use-habits";
 import { useActiveRoutines } from "@/stores/hooks/use-routines";
 import { recurrenceSummary } from "@/lib/timeblocks/formatters";
@@ -50,8 +50,6 @@ export function TimeblocksSidebar({
   boards,
   swimlanes,
 }: Props) {
-  const archivedTimeblocks = useArchivedTimeblocks();
-
   const allHabits = useActiveHabits();
   const allRoutines = useActiveRoutines();
 

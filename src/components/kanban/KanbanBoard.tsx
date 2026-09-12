@@ -71,7 +71,7 @@ import { nanoid } from "nanoid";
 import { Archive, ArrowUpDown } from "lucide-react";
 import { useFilterStore } from "@/stores/filter-store";
 import { initialUiPanelState, uiPanelReducer } from "@/reducers/uiPanelReducer";
-import { ReorderColumnsModal } from "@/components/ui/ReorderColumnsModal";
+import { ReorderColumnsModal } from "@/components/ui/reorder-columns-modal";
 import { KanbanTaskCardContent } from "@/components/kanban/KanbanTaskCardContent";
 import {
   buildTaskBoardPanelRows,
@@ -444,7 +444,6 @@ export function KanbanBoard() {
 
   useEffect(() => {
     const nextTasks = subscribedTasks.map(normalizeTask);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync subscribed tasks into local optimistic board state only when the payload actually changed
     setTasks((previousTasks) =>
       areTaskCollectionsEqual(previousTasks, nextTasks)
         ? previousTasks

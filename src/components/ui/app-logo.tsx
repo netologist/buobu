@@ -210,4 +210,4 @@ export function AppLogo({
   );
 }
 
-export { AppFavicon } from "./AppFavicon";
+export { AppFavicon } from "./app-favicon";

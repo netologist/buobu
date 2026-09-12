@@ -171,7 +171,7 @@ export function MindmapBoard() {
         setIsCreatingNew(false);
       }
     },
-    [boards, swimlanes, selectedMindmap?.swimlaneId]
+    [allMindmaps, boards, guard, selectedMindmap?.swimlaneId, swimlanes]
   );
 
   const handleDeleteMindmap = useCallback(

@@ -12,7 +12,7 @@ vi.mock('@/lib/auth', () => ({
   unlinkGoogleAccount: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { AccountSettingsModal, type SettingsTab } from '../AccountSettingsModal';
+import { AccountSettingsModal } from '../AccountSettingsModal';
 import {
   updatePassword,
   updateEmail,

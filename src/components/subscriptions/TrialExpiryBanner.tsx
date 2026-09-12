@@ -25,11 +25,14 @@ import { startCheckout } from "@/lib/subscriptions/checkout";
 const YEARLY_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_PLUS_YEARLY ?? "";
 const DISMISS_KEY = "buobu_trial_banner_dismissed";
 
+import { cn } from "@/lib/utils";
+
 interface TrialExpiryBannerProps {
   trialEnd: string | null | undefined;
+  className?: string;
 }
 
-export function TrialExpiryBanner({ trialEnd }: TrialExpiryBannerProps) {
+export function TrialExpiryBanner({ trialEnd, className }: TrialExpiryBannerProps) {
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(DISMISS_KEY) === "1";
@@ -66,7 +69,10 @@ export function TrialExpiryBanner({ trialEnd }: TrialExpiryBannerProps) {
     <div
       role="alert"
       aria-live="polite"
-      className="flex items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200",
+        className
+      )}
     >
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />

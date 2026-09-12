@@ -104,7 +104,6 @@ describe('computeNextDueDate', () => {
 
   // Branch coverage: default switch case
   it('unknown type falls back to +1 day (default case)', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(computeNextDueDate({ type: 'unknown' as any, interval: 1 }, '2026-03-21')).toBe('2026-03-22');
   });
 

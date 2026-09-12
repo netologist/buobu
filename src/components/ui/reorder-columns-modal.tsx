@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BoardColumn } from "@/lib/types";
-import { ReorderModal } from "@/components/ui/ReorderModal";
+import { ReorderModal } from "@/components/ui/reorder-modal";
 import { useBoardStore } from "@/stores/board-store";
 
 // ── Sortable column row ───────────────────────────────────────────────────────
@@ -65,18 +65,10 @@ export function ReorderColumnsModal({
   const reorderColumns = useBoardStore((s) => s.reorderColumns);
 
   const board = boards.find((b) => b.id === boardId);
-  const columns = board?.columns ?? [];
-
-  const [orderedColumns, setOrderedColumns] = useState<BoardColumn[]>([]);
-
-  useEffect(() => {
-    if (!open) return;
-    setOrderedColumns(columns);
-  }, [open, columns]);
+  const columns = useMemo(() => board?.columns ?? [], [board?.columns]);
 
   async function handleSave(items: BoardColumn[]) {
     if (!boardId) return;
-    setOrderedColumns(items);
     await reorderColumns(boardId, items.map((c) => c.id));
   }
 
@@ -85,7 +77,7 @@ export function ReorderColumnsModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Reorder Columns"
-      items={orderedColumns}
+      items={columns}
       getItemId={(item) => item.id}
       renderItem={(item) => <SortableColumnRow key={item.id} column={item} />}
       onSave={handleSave}

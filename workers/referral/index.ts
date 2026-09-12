@@ -31,7 +31,7 @@ function getSupabaseAdmin(env: Env): SupabaseClient {
   });
 }
 
-export default {
+const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const allowedOrigin = env.ALLOWED_ORIGIN ?? "*";
@@ -100,3 +100,6 @@ export default {
     return jsonResponse({ error: "Not Found" }, 404, allowedOrigin);
   },
 };
+
+export default worker;
+

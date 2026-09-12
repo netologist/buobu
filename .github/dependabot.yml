@@ -28,11 +28,6 @@ updates:
       prefix: chore
       prefix-development: chore
       include: scope
-    ignore:
-      # Blocked by non-premium collection limit (COL23) in RxDB v17+. See docs/tech-debt/TD-001-rxdb-v17-upgrade-blocker.md
-      - dependency-name: rxdb
-        update-types:
-          - version-update:semver-major
     groups:
       # Sibling packages that share a version range and a peer contract. A
       # partial bump here is a broken build, not a slow one.

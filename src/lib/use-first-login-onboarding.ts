@@ -201,7 +201,7 @@ export function useFirstLoginOnboarding() {
     authLoading
     || (isAuthenticated && (
       dbLoading
-      || (!!user && !!db && step === 'idle' && !startedRef.current)
+      || (!!user && !!db && step === 'idle')
     ))
   );
   const isActive = isProtectedPath && (

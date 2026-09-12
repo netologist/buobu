@@ -500,7 +500,13 @@ export function MindmapCanvas({
                   }
 
                   return (
-                    <g>
+                    <g
+                      className="cursor-pointer"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onToggleCollapse(node.id);
+                      }}
+                    >
                       <circle cx={indicatorX} cy={indicatorY} r={10} fill={`${node.color}15`} stroke={node.color} strokeWidth={1.5} />
                       <text
                         x={indicatorX}

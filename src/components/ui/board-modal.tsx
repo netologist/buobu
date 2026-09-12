@@ -2,12 +2,12 @@
 
 import { Kanban, Columns, Tag, Layers } from "lucide-react";
 
-import { BoardModalDeleteDialog } from "@/components/ui/BoardModalDeleteDialog";
-import { BoardModalFooter } from "@/components/ui/BoardModalFooter";
-import { ColumnsTabContent } from "@/components/ui/BoardModalColumnsTab";
-import { BoardModalGeneralTab } from "@/components/ui/BoardModalGeneralTab";
-import { BoardModalNamingTab } from "@/components/ui/BoardModalNamingTab";
-import { SwimlanesTabContent } from "@/components/ui/BoardModalSwimlanesTab";
+import { BoardModalDeleteDialog } from "@/components/ui/board-modal-delete-dialog";
+import { BoardModalFooter } from "@/components/ui/board-modal-footer";
+import { ColumnsTabContent } from "@/components/ui/board-modal-columns-tab";
+import { BoardModalGeneralTab } from "@/components/ui/board-modal-general-tab";
+import { BoardModalNamingTab } from "@/components/ui/board-modal-naming-tab";
+import { SwimlanesTabContent } from "@/components/ui/board-modal-swimlanes-tab";
 import {
 	Dialog,
 	DialogContent,

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createStore } from 'jotai';
-import { makeTask, makeHabit, makeNote, makeBookmark, makeRoutine, makeVisionBoardItem, makeBacklogItem } from '@/test/factories';
+import { makeTask, makeHabit, makeNote, makeBookmark, makeRoutine, makeVisionBoardItem } from '@/test/factories';
 
 // Import atoms
 import { tasksAtom, tasksLoadingAtom, activeTasksAtom, archivedTasksAtom, deadlineTasksAtom, tasksByColumnAtom } from '../atoms/tasks';
@@ -10,7 +10,6 @@ import { bookmarksAtom, bookmarksLoadingAtom } from '../atoms/bookmarks';
 import { mindmapsAtom, mindmapsLoadingAtom } from '../atoms/mindmaps';
 import { routinesAtom, routinesLoadingAtom } from '../atoms/routines';
 import { visionItemsAtom, visionItemsLoadingAtom, activeVisionItemsAtom } from '../atoms/vision';
-import { backlogItemsAtom, backlogLoadingAtom, activeBacklogItemsAtom } from '../atoms/backlog';
 
 // Create isolated store per test
 let store: ReturnType<typeof createStore>;
@@ -239,32 +238,3 @@ describe('activeVisionItemsAtom (derived)', () => {
   });
 });
 
-// ── Backlog ───────────────────────────────────────────────────────────────────
-
-describe('backlogItemsAtom', () => {
-  it('initialises to empty array', () => {
-    expect(store.get(backlogItemsAtom)).toEqual([]);
-  });
-
-  it('stores backlog items', () => {
-    const item = makeBacklogItem({ text: 'Fix bug #42' });
-    store.set(backlogItemsAtom, [item]);
-    expect(store.get(backlogItemsAtom)[0].text).toBe('Fix bug #42');
-  });
-});
-
-describe('backlogLoadingAtom', () => {
-  it('initialises to false', () => {
-    expect(store.get(backlogLoadingAtom)).toBe(false);
-  });
-});
-
-describe('activeBacklogItemsAtom (derived)', () => {
-  it('returns only non-archived backlog items', () => {
-    const active = makeBacklogItem({ archived: false });
-    const archived = makeBacklogItem({ archived: true });
-    store.set(backlogItemsAtom, [active, archived]);
-    expect(store.get(activeBacklogItemsAtom)).toHaveLength(1);
-    expect(store.get(activeBacklogItemsAtom)[0].id).toBe(active.id);
-  });
-});

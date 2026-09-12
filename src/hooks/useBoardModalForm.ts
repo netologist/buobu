@@ -371,7 +371,7 @@ export function useBoardModalForm({
 				setIsSubmitting(false);
 			}
 		},
-		[currentNamingLabels, onCreated, onOpenChange],
+		[boardGuard, currentNamingLabels, defaultCurrency, onCreated, onOpenChange],
 	);
 
 	const handleSave = useCallback(
@@ -473,7 +473,7 @@ export function useBoardModalForm({
 			setSwimlaneDialogOpen(false);
 			setEditingSwimlane(null);
 		},
-		[boardId, swimlanes],
+		[boardId, swimlaneGuard, swimlanes],
 	);
 
 	const openDeleteDialog = useCallback(() => {

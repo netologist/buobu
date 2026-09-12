@@ -1,8 +1,20 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const MOBILE_BREAKPOINT = 768; // matches Tailwind's `md`
+
+function subscribe(callback: () => void) {
+  const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+  mq.addEventListener("change", callback);
+  return () => mq.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 /**
  * SSR-safe hook that returns `true` when the viewport is narrower than the
@@ -11,17 +23,6 @@ const MOBILE_BREAKPOINT = 768; // matches Tailwind's `md`
  * Defaults to `false` on the server so hydration is consistent.
  */
 export function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-
-    // Set initial value after mount (client-only)
-    setIsMobile(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  return isMobile;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
+

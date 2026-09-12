@@ -199,7 +199,7 @@ export function DailyBriefingModal({ open, onDismiss }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open, autoProcessDone, isDataLoading, autoProcessRoutines, routineLogIdsForToday, today]);
+  }, [open, autoProcessDone, isDataLoading, autoProcessRoutines, routineLogIdsForToday, timeblockMap, today]);
 
   // ── Reset on open ─────────────────────────────────────────────────────────
 

@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useCallback, useState } from "react";
-import { PromptDialog } from "@/components/ui/PromptDialog";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import {
   Dialog,
   DialogContent,

@@ -5,21 +5,19 @@ import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
 
 addRxPlugin(RxDBMigrationSchemaPlugin);
 addRxPlugin(RxDBCleanupPlugin);
-import type { Task, BacklogItem, Habit, HabitLog, ChangeLog, VisionBoardItem, Note, Mindmap, Board, Swimlane, SyncMeta, Bookmark, Routine, RoutineLog, Timeblock } from './types';
+import type { Task, BacklogItem, Habit, HabitLog, VisionBoardItem, Note, Mindmap, Board, Swimlane, Bookmark, Routine, RoutineLog, Timeblock } from './types';
 
 export type Collections = {
   tasks: RxCollection<Task>;
   backlogs: RxCollection<BacklogItem>;
   habits: RxCollection<Habit>;
   habitLogs: RxCollection<HabitLog>;
-  changeLog: RxCollection<ChangeLog>;
   visionItems: RxCollection<VisionBoardItem>;
   notes: RxCollection<Note>;
   bookmarks: RxCollection<Bookmark>;
   mindmaps: RxCollection<Mindmap>;
   boards: RxCollection<Board>;
   swimlanes: RxCollection<Swimlane>;
-  syncMeta: RxCollection<SyncMeta>;
   routines: RxCollection<Routine>;
   routineLogs: RxCollection<RoutineLog>;
   timeblocks: RxCollection<Timeblock>;
@@ -223,29 +221,6 @@ export async function getDatabase(userId: string): Promise<Database> {
             },
             required: ['id', 'habitId', 'date', 'value', '_version', '_createdAt', '_updatedAt', 'user_id', '_modified', '_deleted', '_deviceId'],
             indexes: ['habitId', 'date', 'user_id', '_modified'],
-          },
-        },
-        changeLog: {
-          schema: {
-            version: 0,
-            primaryKey: 'id',
-            type: 'object',
-            properties: {
-              id: { type: 'string', maxLength: 100 },
-              user_id: { type: 'string' },
-              entityType: { type: 'string', enum: ['task', 'habit', 'habitLog', 'backlog'] },
-              entityId: { type: 'string' },
-              operation: { type: 'string', enum: ['create', 'update', 'delete'] },
-              payload: { type: 'object' },
-              timestamp: { type: 'string', format: 'date-time' },
-              vectorClock: { type: 'object' },
-              synced: { type: 'boolean' },
-              syncTarget: { type: ['string', 'null'], enum: ['google-drive', 'icloud', 'dropbox', null] },
-              _modified: { type: 'number', minimum: 0 },
-              _deleted: { type: 'boolean' },
-            },
-            required: ['id', 'user_id', 'entityType', 'entityId', 'operation', 'timestamp', 'vectorClock', 'synced', '_modified', '_deleted'],
-            indexes: ['entityType', 'entityId', 'synced', 'timestamp', 'user_id', '_modified'],
           },
         },
         visionItems: {
@@ -489,24 +464,6 @@ export async function getDatabase(userId: string): Promise<Database> {
             1: (oldDoc: Record<string, unknown>) => ({ ...oldDoc, archived: false, archivedAt: null }),
             2: (oldDoc: Record<string, unknown> & { _createdAt?: string }) => ({ ...oldDoc, order: typeof oldDoc._createdAt === 'string' ? new Date(oldDoc._createdAt).getTime() : 0 }),
             3: (oldDoc: Record<string, unknown>) => ({ ...oldDoc, description: '' }),
-          },
-        },
-        syncMeta: {
-          schema: {
-            version: 0,
-            primaryKey: 'id',
-            type: 'object',
-            properties: {
-              id: { type: 'string', maxLength: 100 },
-              user_id: { type: 'string' },
-              lastSyncAt: { type: 'string' },
-              lastLocalChangeAt: { type: 'string' },
-              updatedAt: { type: 'string', format: 'date-time' },
-              _modified: { type: 'number', minimum: 0 },
-              _deleted: { type: 'boolean' },
-            },
-            required: ['id', 'user_id', '_modified', '_deleted'],
-            indexes: ['user_id', '_modified'],
           },
         },
         routines: {

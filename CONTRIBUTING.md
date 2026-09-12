@@ -85,4 +85,4 @@ One concern per pull request. Update the documentation it invalidates: the READM
 
 ## Licensing
 
-The project is [AGPL-3.0](./LICENSE) and contributions are accepted under it — inbound equals outbound, with no CLA to sign. If you contribute on behalf of an employer, make sure you are able to. Commercial use is permitted by the AGPL; the commercial-license and trademark note sits at the end of [README.md](./README.md).
+The project is [AGPL-3.0](./LICENSE) and contributions are accepted under it — inbound equals outbound, with no CLA to sign. If you contribute on behalf of an employer, make sure you are able to. Commercial use is permitted by the AGPL; the trademark note sits at the end of [README.md](./README.md).

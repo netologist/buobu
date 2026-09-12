@@ -102,7 +102,7 @@ export function NotesBoard() {
       setSelectedNote(target);
       setIsCreatingNew(false);
     }
-  }, [selectedNoteIdParam]);
+  }, [allNotes, selectedNoteIdParam, subscribedNotes]);
 
   // Sync selected note to URL query param (?noteId=...).
   const hasUrlSyncHydrated = useRef(false);

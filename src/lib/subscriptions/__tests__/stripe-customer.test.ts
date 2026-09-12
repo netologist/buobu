@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { getOrCreateStripeCustomer } from '../stripe-customer';
 
 // ---------------------------------------------------------------------------
@@ -16,7 +16,6 @@ function makeSupabaseAdmin(overrides: {
   const singleMock = vi.fn().mockResolvedValue({ data: selectData, error: selectError });
   const eqMock = vi.fn().mockReturnValue({ single: singleMock });
   const selectMock = vi.fn().mockReturnValue({ eq: eqMock });
-  const upsertChain = { upsert: upsertMock };
 
   const fromMock = vi.fn().mockImplementation(() => ({
     select: selectMock,

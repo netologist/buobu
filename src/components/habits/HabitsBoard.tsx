@@ -45,7 +45,7 @@ import { useSyncedScrollPanels } from "@/hooks/useSyncedScrollPanels";
 import { getWeekendBackground } from "@/lib/habits/colorUtils";
 import { addDays, formatDateKey } from "@/lib/habits/dateUtils";
 import { buildHabitChainData } from "@/lib/habits/stats";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LONG_PRESS_DELAY_MS, STORAGE_KEYS } from "@/lib/constants";
 import { useSwimlaneSelectionStore } from "@/stores/swimlane-selection-store";
 import { useUpgradeGuard } from "@/hooks/useUpgradeGuard";
@@ -529,7 +529,7 @@ export function HabitsBoard() {
 				console.error("Failed to save habit", error);
 			}
 		},
-		[board, habitsBySwimlane],
+		[board, guard, habits, habitsBySwimlane],
 	);
 
 	const openAddHabitDialog = useCallback((swimlaneId: string) => {

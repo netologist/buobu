@@ -89,7 +89,7 @@ test.describe('E2E-DATA-01: Import / Export', { tag: '@local' }, () => {
    * This test requires an existing export file to import from.
    * Implement once the export format is finalized and a seed fixture is available.
    */
-  test.skip('import ZIP → data restored correctly', async ({ authenticatedPage: _page }) => {
+  test.skip('import ZIP → data restored correctly', async () => {
     // TODO: implement with seed fixture and export round-trip
   });
 });

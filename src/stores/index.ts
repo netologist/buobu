@@ -29,3 +29,6 @@ export { useMindmapsSubscription, useBoardMindmapsSubscription, useMindmaps, use
 
 // --- Routine hooks ---
 export { useRoutinesSubscription, useRoutineLogsSubscription, useRoutines, useActiveRoutines, useArchivedRoutines, useDueRoutines, useApprovalRequiredRoutines, useAutoProcessRoutines, useRoutineLogs, useLogsByRoutine, routineActions } from './hooks/use-routines';
+
+// --- Timeblock hooks ---
+export { useTimeblocksSubscription, useAllTimeblocks, useActiveTimeblocks, useArchivedTimeblocks, useTimeblocksLoading, timeblockActions } from './hooks/use-timeblocks';

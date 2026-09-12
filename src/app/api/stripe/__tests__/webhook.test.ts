@@ -82,8 +82,6 @@ import { POST } from '../../stripe/webhook/route';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const WEBHOOK_SECRET = 'whsec_mock';
-
 /** Build a minimal Stripe event object. */
 function makeEvent(
   type: string,
@@ -108,20 +106,6 @@ function makeRequest(body: string, sig = 'valid-sig'): NextRequest {
 /** Push response values for each supabaseAdmin.from() call. */
 function queueFromResponses(...responses: Array<Record<string, unknown>>) {
   fromResponses.push(...responses);
-}
-
-/** The minimal subscription object returned by stripe.subscriptions.retrieve(). */
-function makeSubscription(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 'sub_test123',
-    status: 'active',
-    items: { data: [{ price: { id: 'price_monthly_test' } }] },
-    current_period_end: 1800000000,
-    trial_end: null,
-    cancel_at_period_end: false,
-    customer: 'cus_test123',
-    ...overrides,
-  };
 }
 
 // ---------------------------------------------------------------------------

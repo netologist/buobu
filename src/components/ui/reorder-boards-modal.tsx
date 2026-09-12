@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Board } from "@/lib/types";
-import { ReorderModal } from "@/components/ui/ReorderModal";
+import { ReorderModal } from "@/components/ui/reorder-modal";
 import { useBoardStore } from "@/stores/board-store";
 
 // ── Sortable board row ────────────────────────────────────────────────────────
@@ -68,15 +68,7 @@ export function ReorderBoardsModal({
     () => storeBoards.filter((b) => !b.archived),
     [storeBoards],
   );
-  const [orderedBoards, setOrderedBoards] = useState<Board[]>([]);
-
-  useEffect(() => {
-    if (!open) return;
-    setOrderedBoards(activeBoards);
-  }, [open, activeBoards]);
-
   async function handleSave(items: Board[]) {
-    setOrderedBoards(items);
     await reorderBoards(items.map((b) => b.id));
   }
 
@@ -85,7 +77,7 @@ export function ReorderBoardsModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Reorder Boards"
-      items={orderedBoards}
+      items={activeBoards}
       getItemId={(item) => item.id}
       renderItem={(item) => <SortableBoardRow key={item.id} board={item} />}
       onSave={handleSave}

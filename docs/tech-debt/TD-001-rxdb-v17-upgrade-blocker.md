@@ -2,7 +2,7 @@
 
 ## Status
 
-**Open / Accepted Debt** — 2026-09-12
+**Resolved** — 2026-09-12 (Resolved via Path A in TD-003: unused `changeLog` and `syncMeta` collections were removed, reducing total collections from 15 to 13. Upgraded to `rxdb@17.5.0`; Issue #14 closed.)
 
 ## Context
 

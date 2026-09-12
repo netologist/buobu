@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       unsubscribe();
     };
-  }, [dbInitialize, loadBoards, resetSyncStore]);
+  }, [dbInitialize, loadBoards, refreshEntitlements, resetEntitlements, resetSyncStore]);
 
   useEffect(() => {
     if (isLoading) return;

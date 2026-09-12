@@ -46,6 +46,11 @@ export async function regenerateReferralCode(token: string): Promise<{ ok: boole
   return res.json();
 }
 
+/**
+ * @deprecated Referral codes are validated and bound directly via Supabase RPC
+ * (`validate_referral_code` in `src/lib/auth/service.ts`) during registration.
+ * Tracked in TD-007 / Issue #21.
+ */
 export async function useReferralCode(token: string, code: string): Promise<ReferralResult> {
   const res = await fetch(`${REFERRAL_API_BASE}/use`, {
     method: 'POST',
