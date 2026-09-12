@@ -78,4 +78,5 @@ Migrate away from RxDB to an unencumbered open-source local database:
 
 - [ADR-001: RxDB as Database](../adr/001-rxdb-as-database.md)
 - [Database Architecture](../tech-stack/database.md)
+- Issue [#14](https://github.com/netologist/buobu/issues/14)
 - Pull Request [#10](https://github.com/netologist/buobu/pull/10)
