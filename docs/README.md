@@ -58,6 +58,10 @@ The one to read first is [adr/014-local-mode.md](./adr/014-local-mode.md): it ex
 | [diagrams/](./diagrams/) | Mermaid state machines and an entity-relationship diagram |
 | [features/](./features/) | Feature inventory and per-feature design notes |
 
+## Technical Debt
+
+[`tech-debt/`](./tech-debt/) — known architectural limitations, vendor license restrictions, and deferred refactors. Start at [tech-debt/README.md](./tech-debt/README.md).
+
 ## Conventions
 
 - **The source is the schema.** `src/lib/types.ts`, `supabase/migrations/` and `src/lib/rxdb.ts` define the data model; these documents describe it.

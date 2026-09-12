@@ -171,3 +171,4 @@ Two layers of migration:
 
 - [ADR-001: RxDB as Database](../adr/001-rxdb-as-database.md)
 - [Architecture: Local-First](../architecture/local-first.md)
+- [TD-001: RxDB v17 Upgrade Blocked (Collection Limit)](../tech-debt/TD-001-rxdb-v17-upgrade-blocker.md)
