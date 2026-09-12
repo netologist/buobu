@@ -31,7 +31,7 @@ export type KanbanSwimlanePanelProps = {
   headerLabel: string;
   headerCount: number;
   rows: KanbanSwimlanePanelRow[];
-  scrollRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
   onScroll: () => void;
   onOpenBacklog: (laneId: string) => void;
   onOpenArchive: (laneId: string) => void;
