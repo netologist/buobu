@@ -75,8 +75,8 @@ export type AppLayoutProps = {
 	sidebarConfig: SidebarConfig;
 	middlePanel: ReactNode;
 	rightPanel: ReactNode;
-	middlePanelRef?: React.RefObject<HTMLDivElement>;
-	rightPanelRef?: React.RefObject<HTMLDivElement>;
+	middlePanelRef?: React.RefObject<HTMLDivElement | null>;
+	rightPanelRef?: React.RefObject<HTMLDivElement | null>;
 	middlePanelClassName?: string;
 	rightPanelClassName?: string;
 };
